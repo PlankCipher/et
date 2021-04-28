@@ -1,0 +1,70 @@
+#!/bin/sh
+
+# TODO: Remember to make stuff like wordlist configurable
+# TODO: Remove the message box underline when only a message
+# TODO: is shown with no choices
+# TODO: Use markup in the message
+
+MODE=""
+
+run_again () {
+  if [ "$2" ]; then
+    WORD=$(echo "$2" | rofi -dmenu -p $MODE -i -mesg "$1")
+  else
+    if [ "$1" ]; then
+      WORD=$(rofi -dmenu -p $MODE -i -mesg "$1" -lines 0)
+    else
+      WORD=$(rofi -dmenu -p query -i)
+    fi
+  fi
+
+  EXIT_CODE=$?
+  if [ $EXIT_CODE -ne 0 ]; then
+    exit $EXIT_CODE
+  fi
+
+  $0 "$WORD"
+}
+
+spell () {
+  agrep -iB "$1" wordlist.txt | grep -iw "$1" > /dev/null
+  FOUND=$?
+  if [ $FOUND -eq 0 ]; then
+    run_again "\"$1\" appears to be spelled correctly"
+  else
+    MESG=$(
+cat << EOF
+"$1" doesn't appear to be spelled correctly.
+Suggestions:
+EOF
+    )
+
+    SUGGESTIONS=$(agrep -iB "$1" wordlist.txt)
+
+    run_again "$MESG" "$SUGGESTIONS"
+  fi
+}
+
+define () {
+  run_again "Defining the word $1"
+}
+
+if [ "$@" ]; then
+  MODE=$(echo "$@" | cut -d " " -f 1)
+  WORD=$(echo "$@" | cut -d " " -f 2)
+
+  SPACE_COUNT=$(echo "$@" | tr -cd ' \t' | wc -c)
+  if [ "$WORD" == "" ] || [ $SPACE_COUNT -lt 1 ]; then
+    run_again "You need to specifiy a command and a word"
+  else
+    if [ "$MODE" == "spell" ]; then
+      spell $WORD
+    elif [ "$MODE" == "define" ]; then
+      define $WORD
+    else
+      run_again
+    fi
+  fi
+else
+  run_again
+fi
