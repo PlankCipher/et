@@ -4,35 +4,43 @@
 # TODO: Remove the message box underline when only a message
 # TODO: is shown with no choices
 
+exit_on_esc () {
+  EXIT_CODE=$?
+  if [ $EXIT_CODE -ne 0 ]; then
+    exit $EXIT_CODE
+  fi
+}
+
 run_again () {
   if [ "$2" ]; then
     WORD=$(echo "$2" | rofi -dmenu -p $COMMAND -i -mesg "$1")
+    exit_on_esc
 
-    echo "$2" | grep -w "$WORD" > /dev/null
-    IN_SUGGESTIONS=$?
-    if [ $IN_SUGGESTIONS -eq 0 ]; then
-      WORD_LENGTH=$(($(echo -n "$WORD" | wc -m) - 1))
-      echo -n "$WORD" | cut -c 1-$WORD_LENGTH | xclip -r -selection clipboard
+    WORD_LENGTH=$(($(echo -n "$WORD" | wc -m) - 1))
+    if [ $WORD_LENGTH -gt 0 ]; then
+      NEW_WORD=$(echo -n "$WORD" | cut -c 1-$WORD_LENGTH)
+      echo "$2" | grep -w "$NEW_WORD" > /dev/null
+      IN_SUGGESTIONS=$?
+      if [ $IN_SUGGESTIONS -eq 0 ]; then
+        echo -n "$NEW_WORD" | xclip -r -selection clipboard
 
-      which notify-send > /dev/null
-      HAS_NOTIFY_SEND=$?
-      if [ $HAS_NOTIFY_SEND -eq 0 ]; then
-        notify-send -a 'rofi_et' "\"$WORD\" has been copied to clipboard"
+        which notify-send > /dev/null
+        HAS_NOTIFY_SEND=$?
+        if [ $HAS_NOTIFY_SEND -eq 0 ]; then
+          notify-send -a 'rofi_et' "\"$NEW_WORD\" has been copied to clipboard"
+        fi
+
+        exit 0
       fi
-
-      exit 0
     fi
   else
     if [ "$1" ]; then
       WORD=$(rofi -dmenu -p $COMMAND -i -mesg "$1" -lines 0)
+      exit_on_esc
     else
       WORD=$(rofi -dmenu -p query -i)
+      exit_on_esc
     fi
-  fi
-
-  EXIT_CODE=$?
-  if [ $EXIT_CODE -ne 0 ]; then
-    exit $EXIT_CODE
   fi
 
   $0 "$WORD"
@@ -51,7 +59,7 @@ Suggestions:
 EOF
     )
 
-    SUGGESTIONS=$(agrep -iB "$1" wordlist.txt)
+    SUGGESTIONS=$(agrep -iB "$1" wordlist.txt | awk '{print length, $0}' | sort -n | cut -d " " -f2-)
 
     run_again "$MESG" "$SUGGESTIONS"
   fi
