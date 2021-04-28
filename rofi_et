@@ -3,16 +3,27 @@
 # TODO: Remember to make stuff like wordlist configurable
 # TODO: Remove the message box underline when only a message
 # TODO: is shown with no choices
-# TODO: Use markup in the message
-
-MODE=""
 
 run_again () {
   if [ "$2" ]; then
-    WORD=$(echo "$2" | rofi -dmenu -p $MODE -i -mesg "$1")
+    WORD=$(echo "$2" | rofi -dmenu -p $COMMAND -i -mesg "$1")
+
+    echo "$2" | grep -w "$WORD" > /dev/null
+    IN_SUGGESTIONS=$?
+    if [ $IN_SUGGESTIONS -eq 0 ]; then
+      echo "$WORD" | xclip -selection clipboard
+
+      which notify-send > /dev/null
+      HAS_NOTIFY_SEND=$?
+      if [ $HAS_NOTIFY_SEND -eq 0 ]; then
+        notify-send -a 'rofi_et' "\"$WORD\" has been copied to clipboard"
+      fi
+
+      exit 0
+    fi
   else
     if [ "$1" ]; then
-      WORD=$(rofi -dmenu -p $MODE -i -mesg "$1" -lines 0)
+      WORD=$(rofi -dmenu -p $COMMAND -i -mesg "$1" -lines 0)
     else
       WORD=$(rofi -dmenu -p query -i)
     fi
@@ -49,17 +60,19 @@ define () {
   run_again "Defining the word $1"
 }
 
+COMMAND=""
+
 if [ "$@" ]; then
-  MODE=$(echo "$@" | cut -d " " -f 1)
+  COMMAND=$(echo "$@" | cut -d " " -f 1)
   WORD=$(echo "$@" | cut -d " " -f 2)
 
   SPACE_COUNT=$(echo "$@" | tr -cd ' \t' | wc -c)
   if [ "$WORD" == "" ] || [ $SPACE_COUNT -lt 1 ]; then
     run_again "You need to specifiy a command and a word"
   else
-    if [ "$MODE" == "spell" ]; then
+    if [ "$COMMAND" == "spell" ]; then
       spell $WORD
-    elif [ "$MODE" == "define" ]; then
+    elif [ "$COMMAND" == "define" ]; then
       define $WORD
     else
       run_again
