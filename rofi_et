@@ -11,7 +11,8 @@ run_again () {
     echo "$2" | grep -w "$WORD" > /dev/null
     IN_SUGGESTIONS=$?
     if [ $IN_SUGGESTIONS -eq 0 ]; then
-      echo "$WORD" | xclip -selection clipboard
+      WORD_LENGTH=$(($(echo -n "$WORD" | wc -m) - 1))
+      echo -n "$WORD" | cut -c 1-$WORD_LENGTH | xclip -r -selection clipboard
 
       which notify-send > /dev/null
       HAS_NOTIFY_SEND=$?
