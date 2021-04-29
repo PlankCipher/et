@@ -51,7 +51,7 @@ run_again () {
 }
 
 spell () {
-  agrep -iB "$1" wordlist.txt | grep -iw "$1" > /dev/null
+  agrep -iB "$1" $HOME/.local/share/rofi/rofi_et_wordlist.txt | grep -iw "$1" > /dev/null
   FOUND=$?
   PROCEED_TO_DEFINE=$2
   if [ $FOUND -eq 0 ]; then
@@ -66,7 +66,7 @@ Suggestions:
 EOF
     )
 
-    SUGGESTIONS=$(agrep -iB "$1" wordlist.txt | awk '{print length, $0}' | sort -n | cut -d " " -f2-)
+    SUGGESTIONS=$(agrep -iB "$1" $HOME/.local/share/rofi/rofi_et_wordlist.txt | awk '{print length, $0}' | sort -n | cut -d " " -f2-)
 
     run_again "$MESG" "$SUGGESTIONS"
   fi
