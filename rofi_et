@@ -1,18 +1,19 @@
 #!/bin/sh
 
-# TODO: Remember to make the wordlist path and the DELIMITER configurable
-# TODO: Remove the message box underline when only a message
-# TODO: is shown with no choices
+# TODO: Remember to make the wordlist path, the DELIMITER,
+# TODO: the colors configurable, and the max number of definitions
 
 exit_on_esc () {
   EXIT_CODE=$?
   if [ $EXIT_CODE -ne 0 ]; then
+    sed -Ei '/#message \{/,/\}/ s/(\s*)\/\* (border.*) \*\//\1\2/' $HOME/.config/rofi/config.rasi
     exit $EXIT_CODE
   fi
 }
 
 run_again () {
   if [ "$2" ]; then
+    sed -Ei '/#message \{/,/\}/ s/(\s*)\/\* (border.*) \*\//\1\2/' $HOME/.config/rofi/config.rasi
     WORD=$(echo "$2" | rofi -dmenu -p $COMMAND -i -mesg "$1")
     exit_on_esc
 
@@ -35,10 +36,12 @@ run_again () {
     fi
   else
     if [ "$1" ]; then
+      sed -Ei '/#message \{/,/\}/ s/^(\s*)(border.*);{0,1}$/\1\/* \2 *\//' $HOME/.config/rofi/config.rasi
+
       WORD=$(rofi -dmenu -p $COMMAND -i -mesg "$1" -lines 0)
       exit_on_esc
     else
-      WORD=$(rofi -dmenu -p query -i)
+      WORD=$(rofi -dmenu -p $COMMAND -i)
       exit_on_esc
     fi
   fi
@@ -53,12 +56,12 @@ spell () {
   PROCEED_TO_DEFINE=$2
   if [ $FOUND -eq 0 ]; then
     if [ $PROCEED_TO_DEFINE -ne 0 ]; then
-      run_again "\"$1\" appears to be spelled correctly"
+      run_again "<span foreground='green'>\"$1\" appears to be spelled correctly</span>"
     fi
   else
     MESG=$(
 cat << EOF
-"$1" doesn't appear to be spelled correctly.
+<span foreground='red'>"$1" doesn't appear to be spelled correctly.</span>
 Suggestions:
 EOF
     )
@@ -94,12 +97,17 @@ define () {
   spell $1 0
   COMMAND="define"
 
-  DEFINITIONS=$(get_definitions $1)
+  DEFINITIONS=$(
+cat << EOF
+<b><i>Definitions from Wordnik</i></b>:
+$(get_definitions $1)
+EOF
+  )
 
   run_again "$DEFINITIONS"
 }
 
-COMMAND=""
+COMMAND="query"
 
 if [ "$@" ]; then
   COMMAND=$(echo "$@" | cut -d " " -f 1)
@@ -107,14 +115,17 @@ if [ "$@" ]; then
 
   SPACE_COUNT=$(echo "$@" | tr -cd ' \t' | wc -c)
   if [ "$WORD" == "" ] || [ $SPACE_COUNT -lt 1 ]; then
-    run_again "You need to specifiy a command and a word"
+    COMMAND="query"
+    run_again "<span foreground='red'>You need to specifiy a command and a word</span>"
   else
     if [ "$COMMAND" == "spell" ]; then
       spell $WORD 1
     elif [ "$COMMAND" == "define" ]; then
       define $WORD
     else
-      run_again
+      UNKNOWN_COMMAND=$COMMAND
+      COMMAND="query"
+      run_again "<span foreground='red'>Unkown command \"$UNKNOWN_COMMAND\"</span>"
     fi
   fi
 else
