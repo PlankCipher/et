@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# TODO: Remember to make stuff like wordlist configurable
+# TODO: Remember to make the wordlist path and the DELIMITER configurable
 # TODO: Remove the message box underline when only a message
 # TODO: is shown with no choices
 
@@ -44,13 +44,17 @@ run_again () {
   fi
 
   $0 "$WORD"
+  exit 0
 }
 
 spell () {
   agrep -iB "$1" wordlist.txt | grep -iw "$1" > /dev/null
   FOUND=$?
+  PROCEED_TO_DEFINE=$2
   if [ $FOUND -eq 0 ]; then
-    run_again "\"$1\" appears to be spelled correctly"
+    if [ $PROCEED_TO_DEFINE -ne 0 ]; then
+      run_again "\"$1\" appears to be spelled correctly"
+    fi
   else
     MESG=$(
 cat << EOF
@@ -65,8 +69,34 @@ EOF
   fi
 }
 
+get_definitions () {
+  D=";;;"
+
+  WORDNIK_URL="https://www.wordnik.com/words/$1"
+  DEFINITIONS=$(
+  echo -n "$(curl -s $WORDNIK_URL)" |\
+  sed "/guts active/,/<\/ul>/!d;\
+  /<li>/!d" |\
+  sed -E "s/\s*<li><abbr title=\"partOfSpeech\">(.+)<\/abbr> <i>(.*)<\/i> (.*)<\/li>/<${D}b${D}><${D}i${D}>\1<${D}\/i${D}><${D}\/b${D}> [<${D}small${D}>\2<${D}\/small${D}>] \3/;\
+  s/ \[<${D}small${D}><${D}\/small${D}>\]//g;\
+  s/\s{2,}/ /g;\
+  s/<[^\;][^>]*>//g;\
+  s/$D//g;\
+  s/&/\&amp\;/g" |\
+  head -n 13
+  )
+
+  echo "$DEFINITIONS"
+}
+
 define () {
-  run_again "Defining the word $1"
+  COMMAND="spell"
+  spell $1 0
+  COMMAND="define"
+
+  DEFINITIONS=$(get_definitions $1)
+
+  run_again "$DEFINITIONS"
 }
 
 COMMAND=""
@@ -80,7 +110,7 @@ if [ "$@" ]; then
     run_again "You need to specifiy a command and a word"
   else
     if [ "$COMMAND" == "spell" ]; then
-      spell $WORD
+      spell $WORD 1
     elif [ "$COMMAND" == "define" ]; then
       define $WORD
     else
