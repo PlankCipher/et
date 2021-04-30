@@ -24,13 +24,7 @@ run_again () {
       IN_SUGGESTIONS=$?
       if [ $IN_SUGGESTIONS -eq 0 ]; then
         echo -n "$NEW_WORD" | xclip -r -selection clipboard
-
-        which notify-send > /dev/null
-        HAS_NOTIFY_SEND=$?
-        if [ $HAS_NOTIFY_SEND -eq 0 ]; then
-          notify-send -a 'rofi_et' "\"$NEW_WORD\" has been copied to clipboard"
-        fi
-
+        notify-send -a 'rofi_et' "\"$NEW_WORD\" has been copied to clipboard"
         exit 0
       fi
     fi
