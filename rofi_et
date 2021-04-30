@@ -75,7 +75,9 @@ EOF
 get_definitions () {
   D=";;;"
 
-  WORDNIK_URL="https://www.wordnik.com/words/$1"
+  WORD=$(echo "$1" | awk '{print tolower($0)}')
+
+  WORDNIK_URL="https://www.wordnik.com/words/$WORD"
   DEFINITIONS=$(
   echo -n "$(curl -s $WORDNIK_URL)" |\
   sed "/guts active/,/<\/ul>/!d;\
