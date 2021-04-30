@@ -2,7 +2,7 @@
 
 rofi_et is a rofi script with features to aid you with English.
 
-![preview](./preview.gif)
+![preview](./assets/preview.gif)
 
 ## Features
 
@@ -28,6 +28,10 @@ rofi_et is a rofi script with features to aid you with English.
 - `xclip` from `xclip` package on Arch => to copy selected spelling suggestion to clipboard
 - `notify-send` from `libnotify` package on Arch => to notify you on copying a spelling suggestion to clipboard
 - `agrep` from `tre` package on Arch => to do fuzzy searching in the wordlist to get spelling suggestions
+
+## Usage
+
+![usage](./assets/usage.png)
 
 ## Credits
 

@@ -107,25 +107,46 @@ EOF
   run_again "$DEFINITIONS"
 }
 
+usage () {
+  cat << EOF
+<u>Usage (in rofi's input bar)</u>:
+  COMMAND [WORD]
+
+<u>Commands</u>:
+  <b><i>help</i></b>
+    display this help message
+
+  <b><i>define</i></b>
+    get definitions for WORD from wordnik if correctly spelled, otherwise display spell suggestions. (WORD is required for this command)
+
+  <b><i>spell</i></b>
+    get spell suggestions for WORD from wordlist if not spelled correctly, otherwise display a message indicating that WORD is spelled correctly. (WORD is required for this command)
+EOF
+}
+
 COMMAND="query"
 
 if [ "$@" ]; then
   COMMAND=$(echo "$@" | cut -d " " -f 1)
   WORD=$(echo "$@" | cut -d " " -f 2)
 
-  SPACE_COUNT=$(echo "$@" | tr -cd ' \t' | wc -c)
-  if [ "$WORD" == "" ] || [ $SPACE_COUNT -lt 1 ]; then
-    COMMAND="query"
-    run_again "<span foreground='red'>You need to specifiy a command and a word</span>"
+  if [ "$COMMAND" == "help" ]; then
+    run_again "$(usage)"
   else
-    if [ "$COMMAND" == "spell" ]; then
-      spell $WORD 1
-    elif [ "$COMMAND" == "define" ]; then
-      define $WORD
-    else
-      UNKNOWN_COMMAND=$COMMAND
+    SPACE_COUNT=$(echo "$@" | tr -cd ' \t' | wc -c)
+    if [ "$WORD" == "" ] || [ $SPACE_COUNT -lt 1 ]; then
       COMMAND="query"
-      run_again "<span foreground='red'>Unkown command \"$UNKNOWN_COMMAND\"</span>"
+      run_again "<span foreground='red'>You need to specifiy a command and a word</span>"
+    else
+      if [ "$COMMAND" == "spell" ]; then
+        spell $WORD 1
+      elif [ "$COMMAND" == "define" ]; then
+        define $WORD
+      else
+        UNKNOWN_COMMAND=$COMMAND
+        COMMAND="query"
+        run_again "<span foreground='red'>Unkown command \"$UNKNOWN_COMMAND\"</span>"
+      fi
     fi
   fi
 else
