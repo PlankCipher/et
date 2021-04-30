@@ -95,7 +95,7 @@ define () {
 
   DEFINITIONS=$(
 cat << EOF
-<b><i><u>Definitions from Wordnik</u></i></b>:
+<b><i><u>Definitions for "$1" from Wordnik</u></i></b>:
 $(get_definitions $1)
 EOF
   )
