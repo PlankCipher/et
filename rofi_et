@@ -76,7 +76,7 @@ get_definitions () {
   echo -n "$(curl -s $WORDNIK_URL)" |\
   sed "/guts active/,/<\/ul>/!d;\
   /<li>/!d" |\
-  sed -E "s/\s*<li><abbr title=\"partOfSpeech\">(.+)<\/abbr> <i>(.*)<\/i> (.*)<\/li>/<${D}b${D}><${D}i${D}>\1<${D}\/i${D}><${D}\/b${D}> [<${D}small${D}>\2<${D}\/small${D}>] \3/;\
+  sed -E "s/\s*<li><abbr title=\"partOfSpeech\">(.+)<\/abbr> <i>(.*)<\/i> (.*)<\/li>/=> <${D}b${D}><${D}i${D}>\1<${D}\/i${D}><${D}\/b${D}> [<${D}small${D}>\2<${D}\/small${D}>] \3/;\
   s/ \[<${D}small${D}><${D}\/small${D}>\]//g;\
   s/\s{2,}/ /g;\
   s/<[^\;][^>]*>//g;\
