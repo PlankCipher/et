@@ -36,7 +36,7 @@ rofi_et is a rofi script with features to aid you with English.
 
 ## Credits
 
-- I probably got the wordlist from some web archive.
+- I got `words_alpha` wordlist from [this](https://github.com/dwyl/english-words) repo.
 - Wordnik's website is used to get definitions.
 
 ## Contributions
