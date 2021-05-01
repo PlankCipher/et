@@ -81,7 +81,7 @@ get_definitions () {
   s/\s{2,}/ /g;\
   s/<[^\;][^>]*>//g;\
   s/$D//g;\
-  s/&/\&amp\;/g" |\
+  s/&[^amp\;]/\&amp\; /g" |\
   head -n 13
   )
 
