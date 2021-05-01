@@ -23,7 +23,7 @@ rofi_et is a rofi script with features to aid you with English.
 
 ## Installation
 
-1. close this repo => `git clone https://github.com/PlankCipher/rofi_et.git`
+1. clone this repo => `git clone https://github.com/PlankCipher/rofi_et.git`
 2. cd into the cloned repo directory
 3. run `install.sh` => `./install.sh`
 4. Voila 🎉
