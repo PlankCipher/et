@@ -10,7 +10,7 @@ rofi_et is a rofi script with features to aid you with English.
 - [x] Define (online, based on wordnik)
 - [ ] Synonyms (will probably use wordnik)
 - [ ] Antonyms (will probably use wordnik)
-- [ ] Abbreviations (not planned yet)
+- [x] Abbreviations (online, based on Abbreviations.com)
 
 ## Dependencies
 

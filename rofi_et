@@ -6,14 +6,14 @@
 exit_on_esc () {
   EXIT_CODE=$?
   if [ $EXIT_CODE -ne 0 ]; then
-    sed -Ei '/#message \{/,/\}/ s/(\s*)\/\* (border.*) \*\//\1\2/' $HOME/.config/rofi/config.rasi
+    sed -Ei "/#message \{/,/\}/ s/(\s*)\/\* (border.*) \*\//\1\2/" $HOME/.config/rofi/config.rasi
     exit $EXIT_CODE
   fi
 }
 
 run_again () {
   if [ "$2" ]; then
-    sed -Ei '/#message \{/,/\}/ s/(\s*)\/\* (border.*) \*\//\1\2/' $HOME/.config/rofi/config.rasi
+    sed -Ei "/#message \{/,/\}/ s/(\s*)\/\* (border.*) \*\//\1\2/" $HOME/.config/rofi/config.rasi
     WORD=$(echo "$2" | rofi -dmenu -p $COMMAND -i -mesg "$1")
     exit_on_esc
 
@@ -24,13 +24,13 @@ run_again () {
       IN_SUGGESTIONS=$?
       if [ $IN_SUGGESTIONS -eq 0 ]; then
         echo -n "$NEW_WORD" | xclip -r -selection clipboard
-        notify-send -a 'rofi_et' "\"$NEW_WORD\" has been copied to clipboard"
+        notify-send -a "rofi_et" "\"$NEW_WORD\" has been copied to clipboard"
         exit 0
       fi
     fi
   else
     if [ "$1" ]; then
-      sed -Ei '/#message \{/,/\}/ s/^(\s*)(border.*);{0,1}$/\1\/* \2 *\//' $HOME/.config/rofi/config.rasi
+      sed -Ei "/#message \{/,/\}/ s/^(\s*)(border.*);{0,1}$/\1\/* \2 *\//" $HOME/.config/rofi/config.rasi
 
       WORD=$(rofi -dmenu -p $COMMAND -i -mesg "$1" -lines 0)
       exit_on_esc
@@ -44,18 +44,39 @@ run_again () {
   exit 0
 }
 
+escape_html () {
+  echo -n "$1" | sed -E "s/&[^amp\;]/\&amp\; /g"
+}
+
+usage () {
+  cat << EOF
+<u>Usage (in rofi's input bar)</u>:
+  COMMAND [WORD]
+
+<u>Commands</u>:
+  <b><i>help</i></b>
+    display this help message
+
+  <b><i>define</i></b>
+    get definitions for WORD from wordnik if correctly spelled, otherwise display spell suggestions. (WORD is required for this command)
+
+  <b><i>spell</i></b>
+    get spell suggestions for WORD from wordlist if not spelled correctly, otherwise display a message indicating that WORD is spelled correctly. (WORD is required for this command)
+EOF
+}
+
 spell () {
   agrep -iB "$1" $HOME/.local/share/rofi/rofi_et_wordlist.txt | grep -iw "$1" > /dev/null
   FOUND=$?
   PROCEED_TO_DEFINE=$2
   if [ $FOUND -eq 0 ]; then
     if [ $PROCEED_TO_DEFINE -ne 0 ]; then
-      run_again "<span foreground='green'>\"$1\" appears to be spelled correctly</span>"
+      run_again "<span foreground=\"green\">\"$1\" appears to be spelled correctly</span>"
     fi
   else
     MESG=$(
 cat << EOF
-<span foreground='red'>"$1" doesn't appear to be spelled correctly.</span>
+<span foreground="red">"$1" doesn't appear to be spelled correctly.</span>
 Suggestions:
 EOF
     )
@@ -80,10 +101,11 @@ get_definitions () {
   s/ \[<${D}small${D}><${D}\/small${D}>\]//g;\
   s/\s{2,}/ /g;\
   s/<[^\;][^>]*>//g;\
-  s/$D//g;\
-  s/&[^amp\;]/\&amp\; /g" |\
+  s/$D//g;" |\
   head -n 13
   )
+
+  DEFINITIONS=$(escape_html "$DEFINITIONS")
 
   echo "$DEFINITIONS"
 }
@@ -103,21 +125,31 @@ EOF
   run_again "$DEFINITIONS"
 }
 
-usage () {
-  cat << EOF
-<u>Usage (in rofi's input bar)</u>:
-  COMMAND [WORD]
+get_abbreviations () {
+  ABBRS_URL="https://www.abbreviations.com/$1"
 
-<u>Commands</u>:
-  <b><i>help</i></b>
-    display this help message
+  ABBREVIATIONS=$(
+  echo -n "$(curl -s $ABBRS_URL)" |\
+  sed -E "/<table class=\"table tdata no-margin\">.+<\/table>/ !d" |\
+  perl -pe "s/(<td class=\"tal dx fsl\">.+?<\/td>)/\n\$1\n/g" |\
+  sed -E "/^<td class=\"tal dx fsl\">/ !d;\
+  s/<td class=\"tal dx fsl\"><p class=\"desc\">(.*)<\/p><p class=\"path\">(.*)<\/p><\/td>/[<small>\2<\/small>] \1/;\
+  s/<\/{0,1}a[^>]*>//g;\
+  s/&raquo\;/»/g;\
+  s/ -- and more...//g" |\
+  head -n 13
+  )
 
-  <b><i>define</i></b>
-    get definitions for WORD from wordnik if correctly spelled, otherwise display spell suggestions. (WORD is required for this command)
+  ABBREVIATIONS=$(escape_html "$ABBREVIATIONS")
 
-  <b><i>spell</i></b>
-    get spell suggestions for WORD from wordlist if not spelled correctly, otherwise display a message indicating that WORD is spelled correctly. (WORD is required for this command)
+  ABBREVIATIONS=$(
+cat << EOF
+<b><i><u>What "$1" might stand for from Abbreviations.com</u></i></b>:
+$ABBREVIATIONS
 EOF
+  )
+
+  run_again "$ABBREVIATIONS"
 }
 
 COMMAND="query"
@@ -129,19 +161,21 @@ if [ "$@" ]; then
   if [ "$COMMAND" == "help" ]; then
     run_again "$(usage)"
   else
-    SPACE_COUNT=$(echo "$@" | tr -cd ' \t' | wc -c)
+    SPACE_COUNT=$(echo "$@" | tr -cd " \t" | wc -c)
     if [ "$WORD" == "" ] || [ $SPACE_COUNT -lt 1 ]; then
       COMMAND="query"
-      run_again "<span foreground='red'>You need to specifiy a command and a word</span>"
+      run_again "<span foreground=\"red\">You need to specifiy a command and a word</span>"
     else
       if [ "$COMMAND" == "spell" ]; then
         spell $WORD 1
       elif [ "$COMMAND" == "define" ]; then
         define $WORD
+      elif [ "$COMMAND" == "abbreviations" ] || [ "$COMMAND" == "abbr" ]; then
+        get_abbreviations $WORD
       else
         UNKNOWN_COMMAND=$COMMAND
         COMMAND="query"
-        run_again "<span foreground='red'>Unkown command \"$UNKNOWN_COMMAND\"</span>"
+        run_again "<span foreground=\"red\">Unkown command \"$UNKNOWN_COMMAND\"</span>"
       fi
     fi
   fi
