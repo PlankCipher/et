@@ -7,9 +7,9 @@ rofi_et is a rofi script with features to aid you with English.
 ## Features
 
 - [x] Spellcheck and suggestions (offline, based on a wordlist)
-- [x] Define (online, based on wordnik)
-- [ ] Synonyms (will probably use wordnik)
-- [ ] Antonyms (will probably use wordnik)
+- [x] Define (online, based on wordnik.com)
+- [x] Synonyms (online, based on bighugelabs.com)
+- [ ] Antonyms (will be based on bighugelabs.com)
 - [x] Abbreviations (online, based on Abbreviations.com)
 
 ## Dependencies
