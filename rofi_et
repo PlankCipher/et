@@ -68,6 +68,9 @@ usage () {
 
   <b><i>synonyms</i></b> or <b><i>syn</i></b>
     get synonyms for WORD from bighugelabs.com. (WORD is required for this command)
+
+  <b><i>antonyms</i></b> or <b><i>ant</i></b>
+    get antonyms for WORD from bighugelabs.com. (WORD is required for this command)
 EOF
 }
 
@@ -185,6 +188,34 @@ EOF
   run_again "<b><i>Synonyms for \"$1\" from bighugelabs.com:</i></b>" "$SYNONYMS"
 }
 
+get_antonyms () {
+  ANTONYMS_URL="https://words.bighugelabs.com/$1"
+  ANTONYMS_RES="$(curl -s $ANTONYMS_URL)"
+
+  ANTONYMS=""
+
+  declare -a ANT_TYPES=("noun" "verb" "adjective" "adverb")
+
+  for ANT_TYPE in "${ANT_TYPES[@]}"
+  do
+    ANTONYMS+=$(
+cat << EOF
+
+$(echo -n "$ANTONYMS_RES" |\
+sed -E "/<h3>$ANT_TYPE<\/h3>/,/(<h3>)|(<\/div>)/ !d;\
+/<h4>antonyms<\/h4>/,/<\/ul>/ !d;\
+/<li>/ !d;\
+s/\s*<li><a.*>(.*)<\/a><\/li>/($ANT_TYPE) \1/g"
+)
+EOF
+)
+  done
+
+  ANTONYMS=$(echo -n "$ANTONYMS" | sed '1 d')
+
+  run_again "<b><i>Antonyms for \"$1\" from bighugelabs.com:</i></b>" "$ANTONYMS"
+}
+
 COMMAND="query"
 
 if [ "$@" ]; then
@@ -207,6 +238,8 @@ if [ "$@" ]; then
         get_abbreviations $WORD
       elif [ "$COMMAND" == "synonyms" ] || [ "$COMMAND" == "syn" ]; then
         get_synonyms $WORD
+      elif [ "$COMMAND" == "antonyms" ] || [ "$COMMAND" == "ant" ]; then
+        get_antonyms $WORD
       else
         UNKNOWN_COMMAND=$COMMAND
         COMMAND="query"
