@@ -57,11 +57,17 @@ usage () {
   <b><i>help</i></b>
     display this help message
 
-  <b><i>define</i></b>
-    get definitions for WORD from wordnik if correctly spelled, otherwise display spell suggestions. (WORD is required for this command)
+  <b><i>define</i></b> or <b><i>def</i></b>
+    get definitions for WORD from wordnik.com if correctly spelled, otherwise display spell suggestions. (WORD is required for this command)
 
-  <b><i>spell</i></b>
+  <b><i>spell</i></b> or <b><i>spl</i></b>
     get spell suggestions for WORD from wordlist if not spelled correctly, otherwise display a message indicating that WORD is spelled correctly. (WORD is required for this command)
+
+  <b><i>abbreviations</i></b> or <b><i>abr</i></b>
+    get what WORD might stand for from abbreviations.com. (WORD is required for this command)
+
+  <b><i>synonyms</i></b> or <b><i>syn</i></b>
+    get synonyms for WORD from bighugelabs.com. (WORD is required for this command)
 EOF
 }
 
@@ -77,7 +83,7 @@ spell () {
     MESG=$(
 cat << EOF
 <span foreground="red">"$1" doesn't appear to be spelled correctly.</span>
-Suggestions:
+<b><i>Suggestions:</i></b>
 EOF
     )
 
@@ -117,7 +123,7 @@ define () {
 
   DEFINITIONS=$(
 cat << EOF
-<b><i><u>Definitions for "$1" from Wordnik</u></i></b>:
+<b><i><u>Definitions for "$1" from Wordnik:</u></i></b>
 $(get_definitions $1)
 EOF
   )
@@ -144,12 +150,39 @@ get_abbreviations () {
 
   ABBREVIATIONS=$(
 cat << EOF
-<b><i><u>What "$1" might stand for from Abbreviations.com</u></i></b>:
+<b><i><u>What "$1" might stand for from Abbreviations.com:</u></i></b>
 $ABBREVIATIONS
 EOF
   )
 
   run_again "$ABBREVIATIONS"
+}
+
+get_synonyms () {
+  SYNONYMS_URL="https://words.bighugelabs.com/$1"
+  SYNONYMS_RES="$(curl -s $SYNONYMS_URL)"
+
+  SYNONYMS=""
+
+  declare -a SYN_TYPES=("noun" "verb" "adjective" "adverb")
+
+  for SYN_TYPE in "${SYN_TYPES[@]}"
+  do
+    SYNONYMS+=$(
+cat << EOF
+
+$(echo -n "$SYNONYMS_RES" |\
+sed -E "/<h3>$SYN_TYPE<\/h3>/,/<\/ul>/ !d;\
+/<li>/ !d;\
+s/\s*<li><a.*>(.*)<\/a><\/li>/($SYN_TYPE) \1/g"
+)
+EOF
+)
+  done
+
+  SYNONYMS=$(echo -n "$SYNONYMS" | sed '1 d')
+
+  run_again "<b><i>Synonyms for \"$1\" from bighugelabs.com:</i></b>" "$SYNONYMS"
 }
 
 COMMAND="query"
@@ -166,12 +199,14 @@ if [ "$@" ]; then
       COMMAND="query"
       run_again "<span foreground=\"red\">You need to specifiy a command and a word</span>"
     else
-      if [ "$COMMAND" == "spell" ]; then
+      if [ "$COMMAND" == "spell" ] || [ "$COMMAND" == "spl" ]; then
         spell $WORD 1
-      elif [ "$COMMAND" == "define" ]; then
+      elif [ "$COMMAND" == "define" ] || [ "$COMMAND" == "def" ]; then
         define $WORD
-      elif [ "$COMMAND" == "abbreviations" ] || [ "$COMMAND" == "abbr" ]; then
+      elif [ "$COMMAND" == "abbreviations" ] || [ "$COMMAND" == "abr" ]; then
         get_abbreviations $WORD
+      elif [ "$COMMAND" == "synonyms" ] || [ "$COMMAND" == "syn" ]; then
+        get_synonyms $WORD
       else
         UNKNOWN_COMMAND=$COMMAND
         COMMAND="query"
