@@ -37,7 +37,9 @@ rofi_et is a rofi script with features to aid you with English.
 ## Credits
 
 - I got `words_alpha` wordlist from [this](https://github.com/dwyl/english-words) repo.
-- Wordnik's website is used to get definitions.
+- [wordnik.com](https://www.wordnik.com/) is used to get definitions.
+- [abbreviations.com](https://www.abbreviations.com) is used to get what abbreviations stand for.
+- [bighugelabs.com](https://words.bighugelabs.com) is used to get synonyms and antonyms.
 
 ## Contributions
 
