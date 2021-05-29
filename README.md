@@ -11,6 +11,7 @@ rofi_et is a rofi script with features to aid you with English.
 - [x] Synonyms (online, based on bighugelabs.com)
 - [x] Antonyms (online, based on bighugelabs.com)
 - [x] Abbreviations (online, based on Abbreviations.com)
+- [ ] Pronunciation (online, TBD)
 
 ## Dependencies
 
