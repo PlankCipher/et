@@ -1,8 +1,5 @@
 #!/bin/sh
 
-# TODO: Remember to make the wordlist path, the DELIMITER,
-# TODO: the colors configurable, and the max number of definitions
-
 exit_on_esc () {
   EXIT_CODE=$?
   if [ $EXIT_CODE -ne 0 ]; then
