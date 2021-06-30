@@ -1,0 +1,99 @@
+#!/bin/sh
+
+ITEMS_LIMIT=15
+
+exit_on_esc () {
+  EXIT_CODE=$?
+  if [ $EXIT_CODE -ne 0 ]; then
+    exit $EXIT_CODE
+  fi
+}
+
+run_again () {
+  if [ "$2" ]; then
+    WORD=$(echo "$2" | dmenu -p "$1" -i -l $ITEMS_LIMIT)
+    exit_on_esc
+
+    WORD_LENGTH=$(echo -n "$WORD" | wc -m)
+    if [ $WORD_LENGTH -gt 0 ]; then
+      NEW_WORD=$(echo -n "$WORD" | cut -c 1-$WORD_LENGTH)
+      echo "$2" | grep -w "$NEW_WORD" > /dev/null
+      IN_SUGGESTIONS=$?
+      if [ $IN_SUGGESTIONS -eq 0 ]; then
+        echo -n "$NEW_WORD" | xclip -r -selection clipboard
+        notify-send -a "dmenu_et" "\"$NEW_WORD\" has been copied to clipboard"
+        exit 0
+      fi
+    fi
+  elif [ "$1" ]; then
+    WORD=$(echo '' | dmenu -p "$1" -i)
+    exit_on_esc
+  else
+    WORD=$(echo '' | dmenu -p "$COMMAND" -i)
+    exit_on_esc
+  fi
+
+  $0 "$WORD"
+  exit 0
+}
+
+get_abbreviations () {
+  ABBREVIATIONS=$(et -abr "$1")
+  run_again "What \"$1\" might stand for:" "$ABBREVIATIONS"
+}
+
+get_antonyms () {
+  ANTONYMS=$(et -ant "$1")
+  run_again "Antonyms for \"$1\":" "$ANTONYMS"
+}
+
+define () {
+  spell $1 0
+  DEFINITIONS=$(et -def "$1")
+  run_again "Definitions for \"$1\":" "$DEFINITIONS"
+}
+
+spell () {
+  SUGGESTIONS=$(et -spl "$1")
+  FOUND=$?
+  PROCEED_TO_DEFINE=$2
+  if [ $FOUND -eq 0 ]; then
+    if [ $PROCEED_TO_DEFINE -ne 0 ]; then
+      run_again "\"$1\" appears to be spelled correctly"
+    fi
+  else
+    SUGGESTIONS=$(echo "$SUGGESTIONS" | tr -d '\r')
+    run_again "\"$1\" doesn't appear to be spelled correctly. Suggestions:" "$SUGGESTIONS"
+  fi
+}
+
+get_synonyms () {
+  SYNONYMS=$(et -syn "$1")
+  run_again "Synonyms for \"$1\":" "$SYNONYMS"
+}
+
+if [ "$@" ]; then
+  COMMAND=$(echo "$@" | cut -d " " -f 1)
+  WORD=$(echo "$@" | cut -d " " -f 2)
+
+  SPACE_COUNT=$(echo "$@" | tr -cd " \t" | wc -c)
+  if [ "$WORD" == "" ] || [ $SPACE_COUNT -lt 1 ]; then
+    run_again "You need to specifiy a command and a word"
+  else
+    if [ "$COMMAND" == "abr" ] || [ "$COMMAND" == "abbreviations" ]; then
+      get_abbreviations $WORD
+    elif [ "$COMMAND" == "ant" ] || [ "$COMMAND" == "antonyms" ]; then
+      get_antonyms $WORD
+    elif [ "$COMMAND" == "def" ] || [ "$COMMAND" == "define" ]; then
+      define $WORD
+    elif [ "$COMMAND" == "spl" ] || [ "$COMMAND" == "spell" ]; then
+      spell $WORD 1
+    elif [ "$COMMAND" == "syn" ] || [ "$COMMAND" == "synonyms" ]; then
+      get_synonyms $WORD
+    else
+      run_again "Unkown command \"$COMMAND\""
+    fi
+  fi
+else
+  run_again "query:"
+fi

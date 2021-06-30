@@ -27,16 +27,14 @@ run_again () {
         exit 0
       fi
     fi
-  else
-    if [ "$1" ]; then
-      sed -Ei "/#message \{/,/\}/ s/^(\s*)(border.*);{0,1}$/\1\/* \2 *\//" $HOME/.config/rofi/config.rasi
+  elif [ "$1" ]; then
+    sed -Ei "/#message \{/,/\}/ s/^(\s*)(border.*);{0,1}$/\1\/* \2 *\//" $HOME/.config/rofi/config.rasi
 
-      WORD=$(rofi -dmenu -p $COMMAND -i -mesg "$1" -lines 0)
-      exit_on_esc
-    else
-      WORD=$(rofi -dmenu -p $COMMAND -i)
-      exit_on_esc
-    fi
+    WORD=$(rofi -dmenu -p $COMMAND -i -mesg "$1" -lines 0)
+    exit_on_esc
+  else
+    WORD=$(rofi -dmenu -p $COMMAND -i)
+    exit_on_esc
   fi
 
   $0 "$WORD"
@@ -52,7 +50,7 @@ get_abbreviations () {
   ABBREVIATIONS=$(ascii_to_html_entities "$ABBREVIATIONS")
   ABBREVIATIONS=$(
 cat << EOF
-<b><i><u>What "$1" might stand for from Abbreviations.com:</u></i></b>
+<b><i><u>What "$1" might stand for:</u></i></b>
 $ABBREVIATIONS
 EOF
   )
@@ -62,7 +60,7 @@ EOF
 
 get_antonyms () {
   ANTONYMS=$(et -ant "$1")
-  run_again "<b><i>Antonyms for \"$1\" from bighugelabs.com:</i></b>" "$ANTONYMS"
+  run_again "<b><i>Antonyms for \"$1\":</i></b>" "$ANTONYMS"
 }
 
 define () {
@@ -74,7 +72,7 @@ define () {
   DEFINITIONS=$(ascii_to_html_entities "$DEFINITIONS")
   DEFINITIONS=$(
 cat << EOF
-<b><i><u>Definitions for "$1" from Wordnik:</u></i></b>
+<b><i><u>Definitions for "$1":</u></i></b>
 $DEFINITIONS
 EOF
   )
@@ -104,12 +102,12 @@ EOF
 
 get_synonyms () {
   SYNONYMS=$(et -syn "$1")
-  run_again "<b><i>Synonyms for \"$1\" from bighugelabs.com:</i></b>" "$SYNONYMS"
+  run_again "<b><i>Synonyms for \"$1\":</i></b>" "$SYNONYMS"
 }
 
 usage () {
   cat << EOF
-<u>Usage (in rofi's input bar)</u>:
+<u>Usage (in rofi's or dmenu's input bar)</u>:
   COMMAND [WORD]
 
 <u>Commands</u>:
