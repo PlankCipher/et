@@ -1,5 +1,5 @@
 #!/bin/sh
 
-sudo cp rofi_et /sbin/rofi_et
-mkdir -p $HOME/.local/share/rofi/
-cp wordlist.txt $HOME/.local/share/rofi/rofi_et_wordlist.txt
+sudo cp et rofi_et dmenu_et /sbin/
+sudo mkdir -p /usr/share/wordlists/
+sudo cp wordlist.txt /usr/share/wordlists/et_wordlist.txt
