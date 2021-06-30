@@ -1,5 +1,7 @@
 #!/bin/sh
 
+ITEMS_LIMIT=15
+
 exit_on_esc () {
   EXIT_CODE=$?
   if [ $EXIT_CODE -ne 0 ]; then
@@ -41,38 +43,47 @@ run_again () {
   exit 0
 }
 
-escape_html () {
+ascii_to_html_entities () {
   echo -n "$1" | sed -E "s/&[^amp\;]/\&amp\; /g"
 }
 
-usage () {
-  cat << EOF
-<u>Usage (in rofi's input bar)</u>:
-  COMMAND [WORD]
-
-<u>Commands</u>:
-  <b><i>help</i></b>
-    display this help message
-
-  <b><i>define</i></b> or <b><i>def</i></b>
-    get definitions for WORD from wordnik.com if correctly spelled, otherwise display spell suggestions. (WORD is required for this command)
-
-  <b><i>spell</i></b> or <b><i>spl</i></b>
-    get spell suggestions for WORD from wordlist if not spelled correctly, otherwise display a message indicating that WORD is spelled correctly. (WORD is required for this command)
-
-  <b><i>abbreviations</i></b> or <b><i>abr</i></b>
-    get what WORD might stand for from abbreviations.com. (WORD is required for this command)
-
-  <b><i>synonyms</i></b> or <b><i>syn</i></b>
-    get synonyms for WORD from bighugelabs.com. (WORD is required for this command)
-
-  <b><i>antonyms</i></b> or <b><i>ant</i></b>
-    get antonyms for WORD from bighugelabs.com. (WORD is required for this command)
+get_abbreviations () {
+  ABBREVIATIONS=$(et -abr "$1" | head -n $ITEMS_LIMIT | sed 's/^/=> /')
+  ABBREVIATIONS=$(ascii_to_html_entities "$ABBREVIATIONS")
+  ABBREVIATIONS=$(
+cat << EOF
+<b><i><u>What "$1" might stand for from Abbreviations.com:</u></i></b>
+$ABBREVIATIONS
 EOF
+  )
+
+  run_again "$ABBREVIATIONS"
+}
+
+get_antonyms () {
+  ANTONYMS=$(et -ant "$1")
+  run_again "<b><i>Antonyms for \"$1\" from bighugelabs.com:</i></b>" "$ANTONYMS"
+}
+
+define () {
+  COMMAND="spell"
+  spell $1 0
+  COMMAND="define"
+
+  DEFINITIONS=$(et -def "$1" | head -n $ITEMS_LIMIT | sed 's/^/=> /')
+  DEFINITIONS=$(ascii_to_html_entities "$DEFINITIONS")
+  DEFINITIONS=$(
+cat << EOF
+<b><i><u>Definitions for "$1" from Wordnik:</u></i></b>
+$DEFINITIONS
+EOF
+  )
+
+  run_again "$DEFINITIONS"
 }
 
 spell () {
-  agrep -iB "$1" $HOME/.local/share/rofi/rofi_et_wordlist.txt | grep -iw "$1" > /dev/null
+  SUGGESTIONS=$(et -spl "$1")
   FOUND=$?
   PROCEED_TO_DEFINE=$2
   if [ $FOUND -eq 0 ]; then
@@ -87,130 +98,39 @@ cat << EOF
 EOF
     )
 
-    SUGGESTIONS=$(agrep -iB "$1" $HOME/.local/share/rofi/rofi_et_wordlist.txt | awk '{print length, $0}' | sort -n | cut -d " " -f2-)
-
     run_again "$MESG" "$SUGGESTIONS"
   fi
 }
 
-get_definitions () {
-  D=";;;"
-
-  WORD=$(echo "$1" | awk '{print tolower($0)}')
-
-  WORDNIK_URL="https://www.wordnik.com/words/$WORD"
-  DEFINITIONS=$(
-  echo -n "$(curl -s $WORDNIK_URL)" |\
-  sed "/guts active/,/<\/ul>/!d;\
-  /<li>/!d" |\
-  sed -E "s/\s*<li><abbr title=\"partOfSpeech\">(.+)<\/abbr> <i>(.*)<\/i> (.*)<\/li>/=> <${D}b${D}><${D}i${D}>\1<${D}\/i${D}><${D}\/b${D}> [<${D}small${D}>\2<${D}\/small${D}>] \3/;\
-  s/ \[<${D}small${D}><${D}\/small${D}>\]//g;\
-  s/\s{2,}/ /g;\
-  s/<[^\;][^>]*>//g;\
-  s/$D//g;" |\
-  head -n 13
-  )
-
-  DEFINITIONS=$(escape_html "$DEFINITIONS")
-
-  echo "$DEFINITIONS"
-}
-
-define () {
-  COMMAND="spell"
-  spell $1 0
-  COMMAND="define"
-
-  DEFINITIONS=$(
-cat << EOF
-<b><i><u>Definitions for "$1" from Wordnik:</u></i></b>
-$(get_definitions $1)
-EOF
-  )
-
-  run_again "$DEFINITIONS"
-}
-
-get_abbreviations () {
-  ABBRS_URL="https://www.abbreviations.com/$1"
-
-  ABBREVIATIONS=$(
-  echo -n "$(curl -s $ABBRS_URL)" |\
-  sed -E "/<table class=\"table tdata no-margin\">.+<\/table>/ !d" |\
-  perl -pe "s/(<td class=\"tal dx fsl\">.+?<\/td>)/\n\$1\n/g" |\
-  sed -E "/^<td class=\"tal dx fsl\">/ !d;\
-  s/<td class=\"tal dx fsl\"><p class=\"desc\">(.*)<\/p><p class=\"path\">(.*)<\/p><\/td>/[<small>\2<\/small>] \1/;\
-  s/<\/{0,1}a[^>]*>//g;\
-  s/&raquo\;/»/g;\
-  s/ -- and more...//g" |\
-  head -n 13
-  )
-
-  ABBREVIATIONS=$(escape_html "$ABBREVIATIONS")
-
-  ABBREVIATIONS=$(
-cat << EOF
-<b><i><u>What "$1" might stand for from Abbreviations.com:</u></i></b>
-$ABBREVIATIONS
-EOF
-  )
-
-  run_again "$ABBREVIATIONS"
-}
-
 get_synonyms () {
-  SYNONYMS_URL="https://words.bighugelabs.com/$1"
-  SYNONYMS_RES="$(curl -s $SYNONYMS_URL)"
-
-  SYNONYMS=""
-
-  declare -a SYN_TYPES=("noun" "verb" "adjective" "adverb")
-
-  for SYN_TYPE in "${SYN_TYPES[@]}"
-  do
-    SYNONYMS+=$(
-cat << EOF
-
-$(echo -n "$SYNONYMS_RES" |\
-sed -E "/<h3>$SYN_TYPE<\/h3>/,/<\/ul>/ !d;\
-/<li>/ !d;\
-s/\s*<li><a.*>(.*)<\/a><\/li>/($SYN_TYPE) \1/g"
-)
-EOF
-)
-  done
-
-  SYNONYMS=$(echo -n "$SYNONYMS" | sed '1 d')
-
+  SYNONYMS=$(et -syn "$1")
   run_again "<b><i>Synonyms for \"$1\" from bighugelabs.com:</i></b>" "$SYNONYMS"
 }
 
-get_antonyms () {
-  ANTONYMS_URL="https://words.bighugelabs.com/$1"
-  ANTONYMS_RES="$(curl -s $ANTONYMS_URL)"
+usage () {
+  cat << EOF
+<u>Usage (in rofi's input bar)</u>:
+  COMMAND [WORD]
 
-  ANTONYMS=""
+<u>Commands</u>:
+  <b><i>abr</i></b> or <b><i>abbreviations</i></b>
+    get what WORD might stand for from abbreviations.com. (WORD is required for this command)
 
-  declare -a ANT_TYPES=("noun" "verb" "adjective" "adverb")
+  <b><i>ant</i></b> or <b><i>antonyms</i></b>
+    get antonyms for WORD from bighugelabs.com. (WORD is required for this command)
 
-  for ANT_TYPE in "${ANT_TYPES[@]}"
-  do
-    ANTONYMS+=$(
-cat << EOF
+  <b><i>def</i></b> or <b><i>define</i></b>
+    get definitions for WORD from wordnik.com if correctly spelled, otherwise display spell suggestions. (WORD is required for this command)
 
-$(echo -n "$ANTONYMS_RES" |\
-sed -E "/<h3>$ANT_TYPE<\/h3>/,/(<h3>)|(<\/div>)/ !d;\
-/<h4>antonyms<\/h4>/,/<\/ul>/ !d;\
-/<li>/ !d;\
-s/\s*<li><a.*>(.*)<\/a><\/li>/($ANT_TYPE) \1/g"
-)
+  <b><i>spl</i></b> or <b><i>spell</i></b>
+    get spell suggestions for WORD from wordlist if not spelled correctly, otherwise display a message indicating that WORD is spelled correctly. (WORD is required for this command)
+
+  <b><i>syn</i></b> or <b><i>synonyms</i></b>
+    get synonyms for WORD from bighugelabs.com. (WORD is required for this command)
+
+  <b><i>help</i></b>
+    display this help message
 EOF
-)
-  done
-
-  ANTONYMS=$(echo -n "$ANTONYMS" | sed '1 d')
-
-  run_again "<b><i>Antonyms for \"$1\" from bighugelabs.com:</i></b>" "$ANTONYMS"
 }
 
 COMMAND="query"
@@ -227,16 +147,16 @@ if [ "$@" ]; then
       COMMAND="query"
       run_again "<span foreground=\"red\">You need to specifiy a command and a word</span>"
     else
-      if [ "$COMMAND" == "spell" ] || [ "$COMMAND" == "spl" ]; then
-        spell $WORD 1
-      elif [ "$COMMAND" == "define" ] || [ "$COMMAND" == "def" ]; then
-        define $WORD
-      elif [ "$COMMAND" == "abbreviations" ] || [ "$COMMAND" == "abr" ]; then
+      if [ "$COMMAND" == "abr" ] || [ "$COMMAND" == "abbreviations" ]; then
         get_abbreviations $WORD
-      elif [ "$COMMAND" == "synonyms" ] || [ "$COMMAND" == "syn" ]; then
-        get_synonyms $WORD
-      elif [ "$COMMAND" == "antonyms" ] || [ "$COMMAND" == "ant" ]; then
+      elif [ "$COMMAND" == "ant" ] || [ "$COMMAND" == "antonyms" ]; then
         get_antonyms $WORD
+      elif [ "$COMMAND" == "def" ] || [ "$COMMAND" == "define" ]; then
+        define $WORD
+      elif [ "$COMMAND" == "spl" ] || [ "$COMMAND" == "spell" ]; then
+        spell $WORD 1
+      elif [ "$COMMAND" == "syn" ] || [ "$COMMAND" == "synonyms" ]; then
+        get_synonyms $WORD
       else
         UNKNOWN_COMMAND=$COMMAND
         COMMAND="query"
