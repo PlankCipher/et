@@ -1,0 +1,173 @@
+#!/bin/sh
+
+html_entities_to_ascii () {
+  echo -n "$1" | sed -E "s/&amp\;/\& /g"
+}
+
+get_abbreviations () {
+  ABBRS_URL="https://www.abbreviations.com/$1"
+
+  ABBREVIATIONS=$(
+  echo -n "$(curl -s $ABBRS_URL)" |\
+  sed -E "/<table class=\"table tdata no-margin\">.+<\/table>/ !d" |\
+  perl -pe "s/(<td class=\"tal dx fsl\">.+?<\/td>)/\n\$1\n/g" |\
+  sed -E "/^<td class=\"tal dx fsl\">/ !d;\
+  s/<td class=\"tal dx fsl\"><p class=\"desc\">(.*)<\/p><p class=\"path\">(.*)<\/p><\/td>/[\2] \1/;\
+  s/<\/{0,1}a[^>]*>//g;\
+  s/&raquo\;/»/g;\
+  s/ -- and more...//g"
+  )
+
+  ABBREVIATIONS=$(html_entities_to_ascii "$ABBREVIATIONS")
+
+  echo "$ABBREVIATIONS"
+}
+
+get_antonyms () {
+  ANTONYMS_URL="https://words.bighugelabs.com/$1"
+  ANTONYMS_RES="$(curl -s $ANTONYMS_URL)"
+
+  ANTONYMS=""
+
+  declare -a ANT_TYPES=("noun" "verb" "adjective" "adverb")
+
+  for ANT_TYPE in "${ANT_TYPES[@]}"
+  do
+    ANTONYMS+=$(
+cat << EOF
+
+$(echo -n "$ANTONYMS_RES" |\
+sed -E "/<h3>$ANT_TYPE<\/h3>/,/(<h3>)|(<\/div>)/ !d;\
+/<h4>antonyms<\/h4>/,/<\/ul>/ !d;\
+/<li>/ !d;\
+s/\s*<li><a.*>(.*)<\/a><\/li>/($ANT_TYPE) \1/g"
+)
+EOF
+)
+  done
+
+  ANTONYMS=$(echo -n "$ANTONYMS" | sed '1 d')
+
+  echo "$ANTONYMS"
+}
+
+define () {
+  spell $1 0
+
+  WORD=$(echo "$1" | awk '{print tolower($0)}')
+  WORDNIK_URL="https://www.wordnik.com/words/$WORD"
+
+  DEFINITIONS=$(
+  echo -n "$(curl -s $WORDNIK_URL)" |\
+  sed "/guts active/,/<\/ul>/!d;\
+  /<li>/!d" |\
+  sed -E "s/\s*<li><abbr title=\"partOfSpeech\">(.+)<\/abbr> <i>(.*)<\/i> (.*)<\/li>/(\1) [\2] \3/;\
+  s/ \[\]//g;\
+  s/\s{2,}/ /g;\
+  s/<[^\;][^>]*>//g;"
+  )
+
+  DEFINITIONS=$(html_entities_to_ascii "$DEFINITIONS")
+
+  echo "$DEFINITIONS"
+}
+
+spell () {
+  agrep -iB "$1" $HOME/.local/share/rofi/rofi_et_wordlist.txt | grep -iw "$1" > /dev/null
+  FOUND=$?
+  PROCEED_TO_DEFINE=$2
+  if [ $FOUND -eq 0 ]; then
+    if [ $PROCEED_TO_DEFINE -ne 0 ]; then
+      echo "\"$1\" appears to be spelled correctly"
+    fi
+  else
+    SUGGESTIONS=$(agrep -iB "$1" $HOME/.local/share/rofi/rofi_et_wordlist.txt | awk '{print length, $0}' | sort -n | cut -d " " -f2-)
+
+    echo "$SUGGESTIONS"
+    exit 1
+  fi
+}
+
+get_synonyms () {
+  SYNONYMS_URL="https://words.bighugelabs.com/$1"
+  SYNONYMS_RES="$(curl -s $SYNONYMS_URL)"
+
+  SYNONYMS=""
+
+  declare -a SYN_TYPES=("noun" "verb" "adjective" "adverb")
+
+  for SYN_TYPE in "${SYN_TYPES[@]}"
+  do
+    SYNONYMS+=$(
+cat << EOF
+
+$(echo -n "$SYNONYMS_RES" |\
+sed -E "/<h3>$SYN_TYPE<\/h3>/,/<\/ul>/ !d;\
+/<li>/ !d;\
+s/\s*<li><a.*>(.*)<\/a><\/li>/($SYN_TYPE) \1/g"
+)
+EOF
+)
+  done
+
+  SYNONYMS=$(echo -n "$SYNONYMS" | sed '1 d')
+
+  echo "$SYNONYMS"
+}
+
+usage () {
+  cat << EOF
+Usage: et OPTION [WORD]
+
+Options:
+  -abr or --abbreviations
+    print what WORD might stand for from abbreviations.com. (WORD is required for this option)
+
+  -ant or --antonyms
+    print antonyms for WORD from bighugelabs.com. (WORD is required for this option)
+
+  -def or --define
+    print definitions for WORD from wordnik.com if correctly spelled, otherwise print spell suggestions. (WORD is required for this option)
+
+  -spl or --spell
+    print spell suggestions for WORD from wordlist if not spelled correctly (exits with 1 as exit code), otherwise print a message indicating that WORD is spelled correctly. (WORD is required for this option)
+
+  -syn or --synonyms
+    print synonyms for WORD from bighugelabs.com. (WORD is required for this option)
+
+  -h or --help
+    print this help message and exit
+EOF
+}
+
+if [[ "$@" ]]; then
+  OPTION=$(echo "$@" | cut -d " " -f 1)
+  WORD=$(echo "$@" | cut -d " " -f 2)
+
+  if [ "$OPTION" == "-h" ] || [ "$OPTION" == "--help" ]; then
+    usage
+  else
+    SPACE_COUNT=$(echo "$@" | tr -cd " \t" | wc -c)
+    if [ "$WORD" == "" ] || [ $SPACE_COUNT -lt 1 ]; then
+      echo "You need to specifiy an option and a word"
+      exit 1
+    else
+      if [ "$OPTION" == "-def" ] || [ "$OPTION" == "--define" ]; then
+        define $WORD
+      elif [ "$OPTION" == "-spl" ] || [ "$OPTION" == "--spell" ]; then
+        spell $WORD 1
+      elif [ "$OPTION" == "-abr" ] || [ "$OPTION" == "--abbreviations" ]; then
+        get_abbreviations $WORD
+      elif [ "$OPTION" == "-syn" ] || [ "$OPTION" == "--synonyms" ]; then
+        get_synonyms $WORD
+      elif [ "$OPTION" == "-ant" ] || [ "$OPTION" == "--antonyms" ]; then
+        get_antonyms $WORD
+      else
+        echo "Unkown option \"$OPTION\""
+        exit 1
+      fi
+    fi
+  fi
+else
+  usage
+fi
