@@ -26,10 +26,10 @@ run_again () {
       fi
     fi
   elif [ "$1" ]; then
-    WORD=$(echo '' | dmenu -p "$1" -i)
+    WORD=$(printf '%s' | dmenu -p "$1" -i)
     exit_on_esc
   else
-    WORD=$(echo '' | dmenu -p "$COMMAND" -i)
+    WORD=$(printf '%s' | dmenu -p "$COMMAND" -i)
     exit_on_esc
   fi
 

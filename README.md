@@ -1,8 +1,16 @@
-# rofi_et
+# et
 
-rofi_et is a rofi script with features to aid you with English.
+A CLI/rofi/dmenu script with features to aid you with English.
 
-![preview](./assets/preview.gif)
+## Preview
+
+### rofi_et
+
+![rofi_et](./assets/rofi_et.gif)
+
+### dmenu_et
+
+![dmenu_et](./assets/dmenu_et.gif)
 
 ## Features
 
@@ -17,7 +25,7 @@ rofi_et is a rofi script with features to aid you with English.
 
 > The installation script won't install the dependencies for you because I don't know the package names on distros other than Arch
 
-- `rofi` (of course) from `rofi` package on Arch
+- `rofi` or `dmenu`
 - `xclip` from `xclip` package on Arch => to copy selected spelling suggestion to clipboard
 - `notify-send` from `libnotify` package on Arch => to notify you on copying a spelling suggestion to clipboard
 - `agrep` from `tre` package on Arch => to do fuzzy searching in the wordlist to get spelling suggestions
@@ -29,9 +37,36 @@ rofi_et is a rofi script with features to aid you with English.
 3. run `install.sh` => `./install.sh`
 4. Voila 🎉
 
-> You will be asked to enter your password for sudo to move the executable to `/sbin/rofi_et` so that it's accessible from anywhere
+> You will be asked to enter your password for sudo to move the executables to `/sbin/` so that they're accessible from anywhere
 
 ## Usage
+
+### et
+
+```man
+Usage: et OPTION [WORD]
+
+Options:
+  -abr or --abbreviations
+    print what WORD might stand for from abbreviations.com. (WORD is required for this option)
+
+  -ant or --antonyms
+    print antonyms for WORD from bighugelabs.com. (WORD is required for this option)
+
+  -def or --define
+    print definitions for WORD from wordnik.com if correctly spelled, otherwise print spell suggestions. (WORD is required for this option)
+
+  -spl or --spell
+    print spell suggestions for WORD from wordlist if not spelled correctly (exits with 1 as exit code), otherwise print a message indicating that WORD is spelled correctly. (WORD is required for this option)
+
+  -syn or --synonyms
+    print synonyms for WORD from bighugelabs.com. (WORD is required for this option)
+
+  -h or --help
+    print this help message and exit
+```
+
+### rofi_et or dmenu_et
 
 ![usage](./assets/usage.png)
 
