@@ -80,6 +80,14 @@ EOF
   run_again "$DEFINITIONS"
 }
 
+pronounce () {
+  COMMAND="spell"
+  spell $1 0
+  COMMAND="pronounce"
+
+  et -pro $1
+}
+
 spell () {
   SUGGESTIONS=$(et -spl "$1")
   FOUND=$?
@@ -120,6 +128,9 @@ usage () {
   <b><i>def</i></b> or <b><i>define</i></b>
     get definitions for WORD from wordnik.com if correctly spelled, otherwise display spell suggestions. (WORD is required for this command)
 
+  <b><i>pro</i></b> or <b><i>pronounce</i></b>
+    play American English pronunciation of WORD from macmillandictionary.com
+
   <b><i>spl</i></b> or <b><i>spell</i></b>
     get spell suggestions for WORD from wordlist if not spelled correctly, otherwise display a message indicating that WORD is spelled correctly. (WORD is required for this command)
 
@@ -151,6 +162,8 @@ if [ "$@" ]; then
         get_antonyms $WORD
       elif [ "$COMMAND" == "def" ] || [ "$COMMAND" == "define" ]; then
         define $WORD
+      elif [ "$COMMAND" == "pro" ] || [ "$COMMAND" == "pronounce" ]; then
+        pronounce $WORD
       elif [ "$COMMAND" == "spl" ] || [ "$COMMAND" == "spell" ]; then
         spell $WORD 1
       elif [ "$COMMAND" == "syn" ] || [ "$COMMAND" == "synonyms" ]; then

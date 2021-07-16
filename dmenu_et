@@ -53,6 +53,11 @@ define () {
   run_again "Definitions for \"$1\":" "$DEFINITIONS"
 }
 
+pronounce () {
+  spell $1 0
+  et -pro $1
+}
+
 spell () {
   SUGGESTIONS=$(et -spl "$1")
   FOUND=$?
@@ -86,6 +91,8 @@ if [ "$@" ]; then
       get_antonyms $WORD
     elif [ "$COMMAND" == "def" ] || [ "$COMMAND" == "define" ]; then
       define $WORD
+    elif [ "$COMMAND" == "pro" ] || [ "$COMMAND" == "pronounce" ]; then
+      pronounce $WORD
     elif [ "$COMMAND" == "spl" ] || [ "$COMMAND" == "spell" ]; then
       spell $WORD 1
     elif [ "$COMMAND" == "syn" ] || [ "$COMMAND" == "synonyms" ]; then

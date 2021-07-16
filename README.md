@@ -19,7 +19,7 @@ A CLI/rofi/dmenu script with features to aid you with English.
 - [x] Synonyms (online, based on bighugelabs.com)
 - [x] Antonyms (online, based on bighugelabs.com)
 - [x] Abbreviations (online, based on Abbreviations.com)
-- [ ] Pronunciation (online, TBD)
+- [x] Pronunciation (online, macmillandictionary.com)
 
 ## Dependencies
 
@@ -29,6 +29,7 @@ A CLI/rofi/dmenu script with features to aid you with English.
 - `xclip` from `xclip` package on Arch => to copy selected spelling suggestion to clipboard
 - `notify-send` from `libnotify` package on Arch => to notify you on copying a spelling suggestion to clipboard
 - `agrep` from `tre` package on Arch => to do fuzzy searching in the wordlist to get spelling suggestions
+- `sox` from `sox` package on Arch => to play pronunciation
 
 ## Installation
 

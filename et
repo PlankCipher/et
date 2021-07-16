@@ -72,6 +72,13 @@ define () {
   echo "$DEFINITIONS"
 }
 
+pronounce () {
+  spell $1 0
+
+  URL="https://www.macmillandictionary.com/dictionary/american/$1"
+  play -q $(echo -n "$(curl -sL $URL)" | sed -E '/data-src-mp3/ !d; s/.*data-src-mp3="(.+\.mp3)".*/\1/')
+}
+
 spell () {
   agrep -iB "$1" /usr/share/wordlists/et_wordlist.txt | grep -iw "$1" > /dev/null
   FOUND=$?
@@ -129,6 +136,9 @@ Options:
   -def or --define
     print definitions for WORD from wordnik.com if correctly spelled, otherwise print spell suggestions. (WORD is required for this option)
 
+  -pro or --pronounce
+    play American English pronunciation of WORD from macmillandictionary.com
+
   -spl or --spell
     print spell suggestions for WORD from wordlist if not spelled correctly (exits with 1 as exit code), otherwise print a message indicating that WORD is spelled correctly. (WORD is required for this option)
 
@@ -162,6 +172,8 @@ if [[ "$@" ]]; then
         get_synonyms $WORD
       elif [ "$OPTION" == "-ant" ] || [ "$OPTION" == "--antonyms" ]; then
         get_antonyms $WORD
+      elif [ "$OPTION" == "-pro" ] || [ "$OPTION" == "--pronounce" ]; then
+        pronounce $WORD
       else
         echo "Unkown option \"$OPTION\""
         exit 1
