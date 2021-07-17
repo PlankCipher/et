@@ -19,7 +19,7 @@ A CLI/rofi/dmenu script with features to aid you with English.
 - [x] Synonyms (online, based on bighugelabs.com)
 - [x] Antonyms (online, based on bighugelabs.com)
 - [x] Abbreviations (online, based on Abbreviations.com)
-- [x] Pronunciation (online, macmillandictionary.com)
+- [x] Pronunciation (online, based on macmillandictionary.com)
 
 ## Dependencies
 
@@ -57,6 +57,9 @@ Options:
   -def or --define
     print definitions for WORD from wordnik.com if correctly spelled, otherwise print spell suggestions. (WORD is required for this option)
 
+  -pro or --pronounce
+    play American English pronunciation of WORD from macmillandictionary.com
+
   -spl or --spell
     print spell suggestions for WORD from wordlist if not spelled correctly (exits with 1 as exit code), otherwise print a message indicating that WORD is spelled correctly. (WORD is required for this option)
 
@@ -77,6 +80,7 @@ Options:
 - [wordnik.com](https://www.wordnik.com/) is used to get definitions.
 - [abbreviations.com](https://www.abbreviations.com) is used to get what abbreviations stand for.
 - [bighugelabs.com](https://words.bighugelabs.com) is used to get synonyms and antonyms.
+- [macmillandictionary.com](https://www.macmillandictionary.com) is used to get American English pronunciation.
 
 ## Contributions
 
