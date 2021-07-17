@@ -58,7 +58,7 @@ Options:
     print definitions for WORD from wordnik.com if correctly spelled, otherwise print spell suggestions. (WORD is required for this option)
 
   -pro or --pronounce
-    play American English pronunciation of WORD from macmillandictionary.com
+    play American English pronunciation of WORD from macmillandictionary.com. (WORD is required for this option)
 
   -spl or --spell
     print spell suggestions for WORD from wordlist if not spelled correctly (exits with 1 as exit code), otherwise print a message indicating that WORD is spelled correctly. (WORD is required for this option)

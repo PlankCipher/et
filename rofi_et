@@ -129,7 +129,7 @@ usage () {
     get definitions for WORD from wordnik.com if correctly spelled, otherwise display spell suggestions. (WORD is required for this command)
 
   <b><i>pro</i></b> or <b><i>pronounce</i></b>
-    play American English pronunciation of WORD from macmillandictionary.com
+    play American English pronunciation of WORD from macmillandictionary.com. (WORD is required for this command)
 
   <b><i>spl</i></b> or <b><i>spell</i></b>
     get spell suggestions for WORD from wordlist if not spelled correctly, otherwise display a message indicating that WORD is spelled correctly. (WORD is required for this command)
