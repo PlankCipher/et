@@ -56,9 +56,10 @@ define () {
 
   WORD=$(echo "$1" | awk '{print tolower($0)}')
   WORDNIK_URL="https://www.wordnik.com/words/$WORD"
+  USERAGENT='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:92.0) Gecko/20100101 Firefox/92.0'
 
   DEFINITIONS=$(
-  echo -n "$(curl -s $WORDNIK_URL)" |\
+  echo -n "$(curl -s -A "$USERAGENT" $WORDNIK_URL)" |\
   sed "/guts active/,/<\/ul>/!d;\
   /<li>/!d" |\
   sed -E "s/\s*<li><abbr title=\"partOfSpeech\">(.+)<\/abbr> <i>(.*)<\/i> (.*)<\/li>/(\1) [\2] \3/;\
