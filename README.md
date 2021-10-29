@@ -33,7 +33,7 @@ A CLI/rofi/dmenu script with features to aid you with English.
 
 ## Installation
 
-1. clone this repo => `git clone https://github.com/PlankCipher/rofi_et.git`
+1. clone this repo => `git clone https://github.com/PlankCipher/et.git`
 2. cd into the cloned repo directory
 3. run `install.sh` => `./install.sh`
 4. Voila 🎉
