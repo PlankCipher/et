@@ -81,7 +81,7 @@ pronounce () {
 }
 
 spell () {
-  agrep -iB "$1" /usr/share/wordlists/et_wordlist.txt | grep -iw "$1" > /dev/null
+  agrep -iyB "$1" /usr/share/wordlists/et_wordlist.txt | grep -iw "$1" > /dev/null
   FOUND=$?
   PROCEED_TO_DEFINE=$2
   if [ $FOUND -eq 0 ]; then
@@ -89,7 +89,7 @@ spell () {
       echo "\"$1\" appears to be spelled correctly"
     fi
   else
-    SUGGESTIONS=$(agrep -iB "$1" /usr/share/wordlists/et_wordlist.txt | awk '{print length, $0}' | sort -n | cut -d " " -f2-)
+    SUGGESTIONS=$(agrep -iyB "$1" /usr/share/wordlists/et_wordlist.txt | awk '{print length, $0}' | sort -n | cut -d " " -f2-)
 
     echo "$SUGGESTIONS"
     exit 1
