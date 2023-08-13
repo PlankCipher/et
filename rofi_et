@@ -10,6 +10,20 @@ exit_on_esc () {
   fi
 }
 
+copy_to_clipboard () {
+  if [[ -z "$XDG_SESSION_TYPE" ]]; then
+    SESSION_TYPE=$(loginctl show-session "$(loginctl | grep $(whoami) | awk '{ print $1 }')" -p Type --value)
+  else
+    SESSION_TYPE="$XDG_SESSION_TYPE"
+  fi
+
+  if [[ "$SESSION_TYPE" == "wayland" ]]; then
+    echo -n "$1" | wl-copy
+  else
+    echo -n "$1" | xclip -r -selection clipboard
+  fi
+}
+
 run_again () {
   if [ "$2" ]; then
     sed -Ei "/#message \{/,/\}/ s/(\s*)\/\* (border.*) \*\//\1\2/" $HOME/.config/rofi/config.rasi
@@ -22,7 +36,7 @@ run_again () {
       echo "$2" | grep -w "$NEW_WORD" > /dev/null
       IN_SUGGESTIONS=$?
       if [ $IN_SUGGESTIONS -eq 0 ]; then
-        echo -n "$NEW_WORD" | xclip -r -selection clipboard
+        copy_to_clipboard "$NEW_WORD"
         notify-send -a "rofi_et" "\"$NEW_WORD\" has been copied to clipboard"
         exit 0
       fi
