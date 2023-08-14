@@ -5,7 +5,6 @@ ITEMS_LIMIT=15
 exit_on_esc () {
   EXIT_CODE=$?
   if [ $EXIT_CODE -ne 0 ]; then
-    sed -Ei "/#message \{/,/\}/ s/(\s*)\/\* (border.*) \*\//\1\2/" $HOME/.config/rofi/config.rasi
     exit $EXIT_CODE
   fi
 }
@@ -26,11 +25,10 @@ copy_to_clipboard () {
 
 run_again () {
   if [ "$2" ]; then
-    sed -Ei "/#message \{/,/\}/ s/(\s*)\/\* (border.*) \*\//\1\2/" $HOME/.config/rofi/config.rasi
-    WORD=$(echo "$2" | rofi -dmenu -p $COMMAND -i -mesg "$1")
+    WORD=$(echo "$2" | rofi -dmenu -p $COMMAND -i -mesg "$1" -l $ITEMS_LIMIT)
     exit_on_esc
 
-    WORD_LENGTH=$(($(echo -n "$WORD" | wc -m) - 1))
+    WORD_LENGTH=$(echo -n "$WORD" | wc -m)
     if [ $WORD_LENGTH -gt 0 ]; then
       NEW_WORD=$(echo -n "$WORD" | cut -c 1-$WORD_LENGTH)
       echo "$2" | grep -w "$NEW_WORD" > /dev/null
@@ -42,9 +40,7 @@ run_again () {
       fi
     fi
   elif [ "$1" ]; then
-    sed -Ei "/#message \{/,/\}/ s/^(\s*)(border.*);{0,1}$/\1\/* \2 *\//" $HOME/.config/rofi/config.rasi
-
-    WORD=$(rofi -dmenu -p $COMMAND -i -mesg "$1" -lines 0)
+    WORD=$(rofi -dmenu -p $COMMAND -i -mesg "$1")
     exit_on_esc
   else
     WORD=$(rofi -dmenu -p $COMMAND -i)
@@ -55,21 +51,9 @@ run_again () {
   exit 0
 }
 
-ascii_to_html_entities () {
-  echo -n "$1" | sed -E "s/&[^amp\;]/\&amp\; /g"
-}
-
 get_abbreviations () {
-  ABBREVIATIONS=$(et -abr "$1" | head -n $ITEMS_LIMIT | sed 's/^/=> /')
-  ABBREVIATIONS=$(ascii_to_html_entities "$ABBREVIATIONS")
-  ABBREVIATIONS=$(
-cat << EOF
-<b><i><u>What "$1" might stand for:</u></i></b>
-$ABBREVIATIONS
-EOF
-  )
-
-  run_again "$ABBREVIATIONS"
+  ABBREVIATIONS=$(et -abr "$1")
+  run_again "<b><i>What \"$1\" might stand for:</i></b>" "$ABBREVIATIONS"
 }
 
 get_antonyms () {
@@ -82,16 +66,8 @@ define () {
   spell $1 0
   COMMAND="define"
 
-  DEFINITIONS=$(et -def "$1" | head -n $ITEMS_LIMIT | sed 's/^/=> /')
-  DEFINITIONS=$(ascii_to_html_entities "$DEFINITIONS")
-  DEFINITIONS=$(
-cat << EOF
-<b><i><u>Definitions for "$1":</u></i></b>
-$DEFINITIONS
-EOF
-  )
-
-  run_again "$DEFINITIONS"
+  DEFINITIONS=$(et -def "$1")
+  run_again "<b><i>Definitions for \"$1\":</i></b>" "$DEFINITIONS"
 }
 
 pronounce () {
