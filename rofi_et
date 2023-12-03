@@ -40,7 +40,7 @@ run_again () {
       fi
     fi
   elif [ "$1" ]; then
-    WORD=$(rofi -dmenu -p $COMMAND -i -mesg "$1")
+    WORD=$(rofi -dmenu -p $COMMAND -i -mesg "$1" -no-fixed-num-lines -l 0)
     exit_on_esc
   else
     WORD=$(rofi -dmenu -p $COMMAND -i)
