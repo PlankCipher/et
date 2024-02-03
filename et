@@ -6,9 +6,10 @@ html_entities_to_ascii () {
 
 get_abbreviations () {
   ABBRS_URL="https://www.abbreviations.com/$1"
+  USERAGENT='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:92.0) Gecko/20100101 Firefox/92.0'
 
   ABBREVIATIONS=$(
-  echo -n "$(curl -s $ABBRS_URL)" |\
+  echo -n "$(curl -s -A "$USERAGENT" $ABBRS_URL)" |\
   sed -E "/<table class=\"table tdata no-margin\">.+<\/table>/ !d" |\
   perl -pe "s/(<td class=\"tal dx fsl\">.+?<\/td>)/\n\$1\n/g" |\
   sed -E "/^<td class=\"tal dx fsl\">/ !d;\
