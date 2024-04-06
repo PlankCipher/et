@@ -36,7 +36,7 @@ A CLI/rofi/dmenu script with features to aid you with English.
 > The installation script won't install the dependencies for you because I don't know the package names on distros other than Arch
 
 - `rofi` or `dmenu`
-- `xclip` from `xclip` package on Arch => to copy selected spelling suggestion to clipboard
+- `xclip` from the `xclip` package (X) or `wl-copy` from the `wl-clipboard` (Wayland) package on Arch => to copy selected spelling suggestion to clipboard
 - `notify-send` from `libnotify` package on Arch => to notify you on copying a spelling suggestion to clipboard
 - `agrep` from `tre` package on Arch => to do fuzzy searching in the wordlist to get spelling suggestions
 - `sox` from `sox` package on Arch => to play pronunciation
@@ -49,6 +49,13 @@ A CLI/rofi/dmenu script with features to aid you with English.
 4. Voila 🎉
 
 > You will be asked to enter your password for sudo to move the executables to `/sbin/` so that they're accessible from anywhere
+
+## Included
+
+- et (simple underlying cli tool, run `et -h` for help)
+- rofi_et (a rofi menu for et, run `rofi_et` then `help` for help)
+- rofi_et_mode (a rofi custom mode for et, run `rofi -modes 'et:rofi_et_mode,drun,window' -show et` then `help` for help)
+- dmenu_et (a dmenu script for et, run `dmenu_et` and then `help` for help)
 
 ## Usage
 
@@ -80,7 +87,7 @@ Options:
     print this help message and exit
 ```
 
-### rofi_et or dmenu_et
+### rofi_et, rofi_et_mode, or dmenu_et
 
 ![usage](./assets/usage.png)
 
