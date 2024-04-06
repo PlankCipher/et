@@ -1,0 +1,141 @@
+#!/bin/sh
+
+copy_to_clipboard () {
+  if [[ -z "$XDG_SESSION_TYPE" ]]; then
+    SESSION_TYPE=$(loginctl show-session "$(loginctl | grep $(whoami) | awk '{ print $1 }')" -p Type --value)
+  else
+    SESSION_TYPE="$XDG_SESSION_TYPE"
+  fi
+
+  if [[ "$SESSION_TYPE" == "wayland" ]]; then
+    echo -n "$1" | wl-copy
+  else
+    echo -n "$1" | xclip -r -selection clipboard
+  fi
+}
+
+usage () {
+  cat << EOF
+<u>Usage (in rofi's or dmenu's input bar)</u>:
+  COMMAND [WORD]
+
+<u>Commands</u>:
+  <b><i>abr</i></b> or <b><i>abbreviations</i></b>
+    get what WORD might stand for from abbreviations.com. (WORD is required for this command)
+
+  <b><i>ant</i></b> or <b><i>antonyms</i></b>
+    get antonyms for WORD from bighugelabs.com. (WORD is required for this command)
+
+  <b><i>def</i></b> or <b><i>define</i></b>
+    get definitions for WORD from wordnik.com if correctly spelled, otherwise display spell suggestions. (WORD is required for this command)
+
+  <b><i>pro</i></b> or <b><i>pronounce</i></b>
+    play American English pronunciation of WORD from macmillandictionary.com. (WORD is required for this command)
+
+  <b><i>spl</i></b> or <b><i>spell</i></b>
+    get spell suggestions for WORD from wordlist if not spelled correctly, otherwise display a message indicating that WORD is spelled correctly. (WORD is required for this command)
+
+  <b><i>syn</i></b> or <b><i>synonyms</i></b>
+    get synonyms for WORD from bighugelabs.com. (WORD is required for this command)
+
+  <b><i>help</i></b>
+    display this help message
+EOF
+}
+
+get_abbreviations () {
+  ABBREVIATIONS=$(et -abr "$1")
+  echo -en "\0message\x1f<b><i>What \"$1\" might stand for:</i></b>\n"
+  echo "$ABBREVIATIONS"
+}
+
+get_antonyms () {
+  ANTONYMS=$(et -ant "$1")
+  echo -en "\0message\x1f<b><i>Antonyms for \"$1\":</i></b>\n"
+  echo "$ANTONYMS"
+}
+
+define () {
+  spell $1 0
+
+  DEFINITIONS=$(et -def "$1")
+  echo -en "\0message\x1f<b><i>Definitions for \"$1\":</i></b>\n"
+  echo "$DEFINITIONS"
+}
+
+pronounce () {
+  spell $1 0
+  et -pro $1
+}
+
+spell () {
+  SUGGESTIONS=$(et -spl "$1")
+  FOUND=$?
+  SHOW_MESSAGE=$2
+  if [ $FOUND -eq 0 ]; then
+    if [ $SHOW_MESSAGE -eq 1 ]; then
+      echo -en "\0markup-rows\x1ftrue\n"
+      echo -en "<span foreground=\"green\">\"$1\" appears to be spelled correctly</span>\n"
+    fi
+  else
+    echo -en '\0data\x1ftrue\n'
+    echo -en '\0delim\x1f\r\n'
+
+    echo -en "\0message\x1f<span foreground=\"red\">\"$1\" doesn't appear to be spelled correctly.</span>\n<b><i>Suggestions:</i></b>\r"
+
+    echo "$SUGGESTIONS" | tr '\n' '\r'
+
+    exit 1
+  fi
+}
+
+get_synonyms () {
+  SYNONYMS=$(et -syn "$1")
+  echo -en "\0message\x1f<b><i>Synonyms for \"$1\":</i></b>\n"
+  echo "$SYNONYMS"
+}
+
+
+if [ "$ROFI_DATA" == "true" ]; then
+  echo -en '\0delim\x1f\n\r'
+  echo -en '\0data\x1ffalse\n'
+fi
+
+echo -en '\0message\x1f\n'
+
+if [ "$ROFI_RETV" == 1 ]; then
+  copy_to_clipboard "$@"
+  notify-send -a "rofi_et" "\"$@\" has been copied to clipboard"
+elif [ "$@" ]; then
+  COMMAND=$(echo "$@" | cut -d " " -f 1)
+  WORD=$(echo "$@" | cut -d " " -f 2)
+
+  if [ "$COMMAND" == "help" ]; then
+    echo -en "\0markup-rows\x1ftrue\n"
+    usage
+  else
+    SPACE_COUNT=$(echo "$@" | tr -cd " \t" | wc -c)
+    if [ "$WORD" == "" ] || [ $SPACE_COUNT -lt 1 ]; then
+      echo -en "\0markup-rows\x1ftrue\n"
+      echo '<span foreground="red">You need to specifiy a command and a word</span>'
+    else
+      echo -en "\0markup-rows\x1ffalse\n"
+      if [ "$COMMAND" == "abr" ] || [ "$COMMAND" == "abbreviations" ]; then
+        get_abbreviations $WORD
+      elif [ "$COMMAND" == "ant" ] || [ "$COMMAND" == "antonyms" ]; then
+        get_antonyms $WORD
+      elif [ "$COMMAND" == "def" ] || [ "$COMMAND" == "define" ]; then
+        define $WORD
+      elif [ "$COMMAND" == "pro" ] || [ "$COMMAND" == "pronounce" ]; then
+        pronounce $WORD
+      elif [ "$COMMAND" == "spl" ] || [ "$COMMAND" == "spell" ]; then
+        spell $WORD 1
+      elif [ "$COMMAND" == "syn" ] || [ "$COMMAND" == "synonyms" ]; then
+        get_synonyms $WORD
+      else
+        echo -en "\0markup-rows\x1ftrue\n"
+        echo "<span foreground=\"red\">Unkown command \"$COMMAND\"</span>"
+      fi
+    fi
+  fi
+fi
