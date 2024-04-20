@@ -75,10 +75,16 @@ define () {
 }
 
 pronounce () {
-  spell $1 0
+    spell $1 0
 
-  URL="https://www.macmillandictionary.com/dictionary/american/$1"
-  play -q $(echo -n "$(curl -sL $URL)" | sed -E '/data-src-mp3/ !d; s/.*data-src-mp3="(.+\.mp3)".*/\1/')
+    PRONOUNCIATIONS=$(curl -s "https://api.dictionaryapi.dev/api/v2/entries/en/$1" | grep -oP '"audio":"\K[^"]+')
+    for ACCENT in 'uk' 'us' 'au' '.*'; do
+        MP3_URL=$(echo "$PRONOUNCIATIONS" | grep -m 1 "$ACCENT")
+        if [ -n "$MP3_URL" ]; then
+            play "$MP3_URL"
+            break
+        fi
+    done
 }
 
 spell () {
