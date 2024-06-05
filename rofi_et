@@ -31,8 +31,10 @@ run_again () {
     WORD_LENGTH=$(echo -n "$WORD" | wc -m)
     if [ $WORD_LENGTH -gt 0 ]; then
       NEW_WORD=$(echo -n "$WORD" | cut -c 1-$WORD_LENGTH)
+
       echo "$2" | grep -w "$NEW_WORD" > /dev/null
       IN_SUGGESTIONS=$?
+
       if [ $IN_SUGGESTIONS -eq 0 ]; then
         copy_to_clipboard "$NEW_WORD"
         notify-send -a "rofi_et" "\"$NEW_WORD\" has been copied to clipboard"
@@ -57,6 +59,10 @@ get_abbreviations () {
 }
 
 get_antonyms () {
+  COMMAND="spell"
+  spell $1 0
+  COMMAND="ant"
+
   ANTONYMS=$(et -ant "$1")
   run_again "<b><i>Antonyms for \"$1\":</i></b>" "$ANTONYMS"
 }
@@ -112,6 +118,10 @@ EOF
 }
 
 get_synonyms () {
+  COMMAND="spell"
+  spell $1 0
+  COMMAND="syn"
+
   SYNONYMS=$(et -syn "$1")
   run_again "<b><i>Synonyms for \"$1\":</i></b>" "$SYNONYMS"
 }
@@ -155,6 +165,7 @@ if [ "$@" ]; then
     run_again "$(usage)"
   else
     SPACE_COUNT=$(echo "$@" | tr -cd " \t" | wc -c)
+
     if [ "$WORD" == "" ] || [ $SPACE_COUNT -lt 1 ]; then
       COMMAND="query"
       run_again "<span foreground=\"red\">You need to specifiy a command and a word</span>"

@@ -9,14 +9,14 @@ get_abbreviations () {
   USERAGENT='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:92.0) Gecko/20100101 Firefox/92.0'
 
   ABBREVIATIONS=$(
-  echo -n "$(curl -s -A "$USERAGENT" $ABBRS_URL)" |\
-  sed -E "/<table class=\"table tdata no-margin\">.+<\/table>/ !d" |\
-  perl -pe "s/(<td class=\"tal dx fsl\">.+?<\/td>)/\n\$1\n/g" |\
-  sed -E "/^<td class=\"tal dx fsl\">/ !d;\
-  s/<td class=\"tal dx fsl\"><p class=\"desc\">(.*)<\/p><p class=\"path\">(.*)<\/p><\/td>/[\2] \1/;\
-  s/<\/{0,1}a[^>]*>//g;\
-  s/&raquo\;/»/g;\
-  s/ -- and more...//g"
+    echo -n "$(curl -s -A "$USERAGENT" $ABBRS_URL)" |\
+    sed -E "/<table class=\"table tdata no-margin\">.+<\/table>/ !d" |\
+    perl -pe "s/(<td class=\"tal dx fsl\">.+?<\/td>)/\n\$1\n/g" |\
+    sed -E "/^<td class=\"tal dx fsl\">/ !d;\
+            s/<td class=\"tal dx fsl\"><p class=\"desc\">(.*)<\/p><p class=\"path\">(.*)<\/p><\/td>/[\2] \1/;\
+            s/<\/{0,1}a[^>]*>//g;\
+            s/&raquo\;/»/g;\
+            s/ -- and more...//g"
   )
 
   ABBREVIATIONS=$(html_entities_to_ascii "$ABBREVIATIONS")
@@ -25,15 +25,16 @@ get_abbreviations () {
 }
 
 get_antonyms () {
-  ANTONYMS_URL="https://words.bighugelabs.com/$1"
+  WORD="$1"
+
+  spell $WORD 0
+
+  ANTONYMS_URL="https://words.bighugelabs.com/$WORD"
   ANTONYMS_RES="$(curl -s $ANTONYMS_URL)"
 
   ANTONYMS=""
-
   declare -a ANT_TYPES=("noun" "verb" "adjective" "adverb")
-
-  for ANT_TYPE in "${ANT_TYPES[@]}"
-  do
+  for ANT_TYPE in "${ANT_TYPES[@]}"; do
     ANTONYMS+=$(
 cat << EOF
 
@@ -59,13 +60,13 @@ define () {
   USERAGENT='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:92.0) Gecko/20100101 Firefox/92.0'
 
   DEFINITIONS=$(
-  echo -n "$(curl -s -A "$USERAGENT" $WORDNIK_URL)" |\
-  sed "/guts active/,/<\/ul>/!d;\
-  /<li>/!d" |\
-  sed -E "s/\s*<li><abbr title=\"partOfSpeech\">(.+)<\/abbr> <i>(.*)<\/i> (.*)<\/li>/(\1) [\2] \3/;\
-  s/ \[\]//g;\
-  s/\s{2,}/ /g;\
-  s/<[^\;][^>]*>//g;"
+    echo -n "$(curl -s -A "$USERAGENT" $WORDNIK_URL)" |\
+    sed "/guts active/,/<\/ul>/!d;\
+         /<li>/!d" |\
+    sed -E "s/\s*<li><abbr title=\"partOfSpeech\">(.+)<\/abbr> <i>(.*)<\/i> (.*)<\/li>/(\1) [\2] \3/;\
+            s/ \[\]//g;\
+            s/\s{2,}/ /g;\
+            s/<[^\;][^>]*>//g;"
   )
 
   DEFINITIONS=$(html_entities_to_ascii "$DEFINITIONS")
@@ -131,6 +132,7 @@ list_pronunciation_sources () {
 
 spell () {
   agrep -iyB "$1" /usr/share/wordlists/et_wordlist.txt | grep -iw "$1" > /dev/null
+
   FOUND=$?
   PROCEED_TO_DEFINE=$2
   if [ $FOUND -eq 0 ]; then
@@ -146,15 +148,16 @@ spell () {
 }
 
 get_synonyms () {
-  SYNONYMS_URL="https://words.bighugelabs.com/$1"
+  WORD="$1"
+
+  spell $WORD 0
+
+  SYNONYMS_URL="https://words.bighugelabs.com/$WORD"
   SYNONYMS_RES="$(curl -s $SYNONYMS_URL)"
 
   SYNONYMS=""
-
   declare -a SYN_TYPES=("noun" "verb" "adjective" "adverb")
-
-  for SYN_TYPE in "${SYN_TYPES[@]}"
-  do
+  for SYN_TYPE in "${SYN_TYPES[@]}"; do
     SYNONYMS+=$(
 cat << EOF
 
@@ -216,6 +219,7 @@ if [[ "$@" ]]; then
     usage
   else
     SPACE_COUNT=$(echo "$@" | tr -cd " \t" | wc -c)
+
     if [ "$WORD" == "" ] || [ $SPACE_COUNT -lt 1 ]; then
       echo "You need to specifiy an option and a word"
       exit 1

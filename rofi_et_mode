@@ -45,12 +45,16 @@ EOF
 
 get_abbreviations () {
   ABBREVIATIONS=$(et -abr "$1")
+
   echo -en "\0message\x1f<b><i>What \"$1\" might stand for:</i></b>\n"
   echo "$ABBREVIATIONS"
 }
 
 get_antonyms () {
+  spell $1 0
+
   ANTONYMS=$(et -ant "$1")
+
   echo -en "\0message\x1f<b><i>Antonyms for \"$1\":</i></b>\n"
   echo "$ANTONYMS"
 }
@@ -59,6 +63,7 @@ define () {
   spell $1 0
 
   DEFINITIONS=$(et -def "$1")
+
   echo -en "\0message\x1f<b><i>Definitions for \"$1\":</i></b>\n"
   echo "$DEFINITIONS"
 }
@@ -83,6 +88,7 @@ pronounce () {
 
 spell () {
   SUGGESTIONS=$(et -spl "$1")
+
   FOUND=$?
   SHOW_MESSAGE=$2
   if [ $FOUND -eq 0 ]; then
@@ -106,6 +112,7 @@ get_synonyms () {
   spell $1 0
 
   SYNONYMS=$(et -syn "$1")
+
   echo -en "\0message\x1f<b><i>Synonyms for \"$1\":</i></b>\n"
   echo "$SYNONYMS"
 }
@@ -140,11 +147,13 @@ if [ "$@" ]; then
     usage
   else
     SPACE_COUNT=$(echo "$@" | tr -cd " \t" | wc -c)
+
     if [ "$WORD" == "" ] || [ $SPACE_COUNT -lt 1 ]; then
       echo -en "\0markup-rows\x1ftrue\n"
       echo '<span foreground="red">You need to specifiy a command and a word</span>'
     else
       echo -en "\0markup-rows\x1ffalse\n"
+
       if [ "$COMMAND" == "abr" ] || [ "$COMMAND" == "abbreviations" ]; then
         get_abbreviations $WORD
       elif [ "$COMMAND" == "ant" ] || [ "$COMMAND" == "antonyms" ]; then

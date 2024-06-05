@@ -31,8 +31,10 @@ run_again () {
     WORD_LENGTH=$(echo -n "$WORD" | wc -m)
     if [ $WORD_LENGTH -gt 0 ]; then
       NEW_WORD=$(echo -n "$WORD" | cut -c 1-$WORD_LENGTH)
+
       echo "$2" | grep -w "$NEW_WORD" > /dev/null
       IN_SUGGESTIONS=$?
+
       if [ $IN_SUGGESTIONS -eq 0 ]; then
         copy_to_clipboard "$NEW_WORD"
         notify-send -a "dmenu_et" "\"$NEW_WORD\" has been copied to clipboard"
@@ -57,12 +59,15 @@ get_abbreviations () {
 }
 
 get_antonyms () {
+  spell $1 0
+
   ANTONYMS=$(et -ant "$1")
   run_again "Antonyms for \"$1\":" "$ANTONYMS"
 }
 
 define () {
   spell $1 0
+
   DEFINITIONS=$(et -def "$1")
   run_again "Definitions for \"$1\":" "$DEFINITIONS"
 }
@@ -88,6 +93,7 @@ pronounce () {
 
 spell () {
   SUGGESTIONS=$(et -spl "$1")
+
   FOUND=$?
   PROCEED_TO_DEFINE=$2
   if [ $FOUND -eq 0 ]; then
@@ -101,6 +107,8 @@ spell () {
 }
 
 get_synonyms () {
+  spell $1 0
+
   SYNONYMS=$(et -syn "$1")
   run_again "Synonyms for \"$1\":" "$SYNONYMS"
 }
