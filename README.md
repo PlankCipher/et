@@ -25,11 +25,11 @@ A CLI/rofi/dmenu script with features to aid you with English.
 ## Features
 
 - [x] Spellcheck and suggestions (offline, based on a wordlist)
-- [x] Define (online, based on wordnik.com)
-- [x] Synonyms (online, based on bighugelabs.com)
-- [x] Antonyms (online, based on bighugelabs.com)
-- [x] Abbreviations (online, based on Abbreviations.com)
-- [x] Pronunciation (online, based on macmillandictionary.com)
+- [x] Define (online, based on [wordnik.com](https://wordnik.com))
+- [x] Synonyms (online, based on [bighugelabs.com](https://bighugelabs.com))
+- [x] Antonyms (online, based on [bighugelabs.com](https://bighugelabs.com))
+- [x] Abbreviations (online, based on [abbreviations.com](https://abbreviations.com))
+- [x] Pronunciation (online, based on [wordnik.com](https://wordnik.com) and [dictionaryapi.dev](https://dictionaryapi.dev))
 
 ## Dependencies
 
@@ -62,29 +62,37 @@ A CLI/rofi/dmenu script with features to aid you with English.
 ### et
 
 ```man
-Usage: et OPTION [WORD]
+Usage: et OPTION...
 
 Options:
-  -abr or --abbreviations
-    print what WORD might stand for from abbreviations.com. (WORD is required for this option)
+  -abr, --abbreviations <abr>
+    Print what <abr> might stand for from abbreviations.com.
 
-  -ant or --antonyms
-    print antonyms for WORD from bighugelabs.com. (WORD is required for this option)
+  -ant, --antonyms <word>
+    Print antonyms for <word> from bighugelabs.com.
 
-  -def or --define
-    print definitions for WORD from wordnik.com if correctly spelled, otherwise print spell suggestions. (WORD is required for this option)
+  -def, --define <word>
+    Print definitions for <word> from wordnik.com if correctly spelled, otherwise print spell suggestions.
 
-  -pro or --pronounce
-    play American English pronunciation of WORD from macmillandictionary.com. (WORD is required for this option)
+  -pro, --pronounce <word>
+    Play pronunciation of <word>.
 
-  -spl or --spell
-    print spell suggestions for WORD from wordlist if not spelled correctly (exits with 1 as exit code), otherwise print a message indicating that WORD is spelled correctly. (WORD is required for this option)
+    Defaults to American English pronunciation (listed as macmillan in sources list) from wordnik.com (which in turn depends on macmillandictionary). Other pronunciation sources/accents (from dictionaryapi.dev) can be listed with -lst|--list-sources and specified with -src|--source (must come after -pro|--pronounce).
 
-  -syn or --synonyms
-    print synonyms for WORD from bighugelabs.com. (WORD is required for this option)
+  -lst, --list-sources <word>
+    List available pronunciation sources/accents for <word>.
 
-  -h or --help
-    print this help message and exit
+  -src, --source <source>
+    Specify the <source> to use for pronunciation. This option must come after -pro|--pronounce.
+
+  -spl, --spell <word>
+    Print spell suggestions for <word> from wordlist if not spelled correctly (exits with 1 as exit code), otherwise print a message indicating that <word> is spelled correctly.
+
+  -syn, --synonyms <word>
+    Print synonyms for <word> from bighugelabs.com.
+
+  -h, --help
+    Print this help message and exit
 ```
 
 ### rofi_et, rofi_et_mode, or dmenu_et
@@ -94,10 +102,10 @@ Options:
 ## Credits
 
 - I got `words_alpha` wordlist from [this](https://github.com/dwyl/english-words) repo.
-- [wordnik.com](https://www.wordnik.com/) is used to get definitions.
+- [wordnik.com](https://www.wordnik.com) is used to get definitions and pronunciations.
 - [abbreviations.com](https://www.abbreviations.com) is used to get what abbreviations stand for.
 - [bighugelabs.com](https://words.bighugelabs.com) is used to get synonyms and antonyms.
-- [macmillandictionary.com](https://www.macmillandictionary.com) is used to get American English pronunciation.
+- [dictionaryapi.dev](https://dictionaryapi.dev) is used to get pronunciations.
 
 ## Contributions
 

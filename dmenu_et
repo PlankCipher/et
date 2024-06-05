@@ -68,8 +68,22 @@ define () {
 }
 
 pronounce () {
-  spell $1 0
-  et -pro $1
+  WORD="$1"
+
+  spell "$WORD" 0
+
+  SOURCE='macmillan'
+
+  SOURCES=$(et -lst "$WORD" | sed 's/^- //')
+  if [[ $(echo "$SOURCES" | wc -l) -gt 1 ]]; then
+    SOURCE=$(
+      echo "$SOURCES" | \
+      dmenu -p 'Choose pronunciation source/accent: ' -i -l $ITEMS_LIMIT | \
+      sed 's/ (default)$//'
+    )
+  fi
+
+  et -pro "$WORD" -src "$SOURCE"
 }
 
 spell () {

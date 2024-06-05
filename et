@@ -55,7 +55,6 @@ EOF
 define () {
   spell $1 0
 
-  WORD=$(echo "$1" | awk '{print tolower($0)}')
   WORDNIK_URL="https://www.wordnik.com/words/$WORD"
   USERAGENT='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:92.0) Gecko/20100101 Firefox/92.0'
 
@@ -75,10 +74,59 @@ define () {
 }
 
 pronounce () {
-  spell $1 0
+  WORD="$1"
+  SOURCE="$2"
 
-  URL="https://www.macmillandictionary.com/dictionary/american/$1"
-  play -q $(echo -n "$(curl -sL $URL)" | sed -E '/data-src-mp3/ !d; s/.*data-src-mp3="(.+\.mp3)".*/\1/')
+  spell $WORD 0
+
+  SOUND_URL=""
+
+  if [[ "$SOURCE" == "macmillan" ]]; then
+    USERAGENT='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:92.0) Gecko/20100101 Firefox/92.0'
+
+    SOUND_URL=$(
+      curl -s -A "$USERAGENT" "https://www.wordnik.com/fragments/sounds/$WORD" | \
+      tac | \
+      sed -n '/macmillandictionary/, /play_sound/ p' | \
+      tail -n 1 | \
+      sed -E 's/.*doc-fileUrl="([^"]+)".*/\1/; s/&amp\;/\&/g'
+    )
+  else
+    SOUND_URL=$(
+      curl -s "https://api.dictionaryapi.dev/api/v2/entries/en/$WORD" | \
+      grep -oE '"audio":"[^"]+"' | \
+      cut -d ':' -f 2- | \
+      sort | \
+      uniq | \
+      sed -E 's/^"|"$//g' | \
+      grep "$WORD-$SOURCE\.mp3"
+    )
+
+    if [[ -z "$SOUND_URL" ]]; then
+      echo "Invalid source. See available ones with -lst|--list-sources."
+      exit 1
+    fi
+  fi
+
+  play -q -t mp3 "$SOUND_URL"
+}
+
+list_pronunciation_sources () {
+  WORD="$1"
+
+  spell $WORD 0
+
+  DICTAPI_SOURCES=$(
+    curl -s "https://api.dictionaryapi.dev/api/v2/entries/en/$WORD" | \
+    grep -oE '"audio":"[^"]+"' | \
+    cut -d ':' -f 2- | \
+    sed -E "s/.*$WORD-(.+)\.mp3\"$/\1/" | \
+    sort | \
+    uniq
+  )
+
+  echo "- macmillan (default)"
+  echo "$DICTAPI_SOURCES" | sed 's/^/- /'
 }
 
 spell () {
@@ -126,29 +174,37 @@ EOF
 
 usage () {
   cat << EOF
-Usage: et OPTION [WORD]
+Usage: et OPTION...
 
 Options:
-  -abr or --abbreviations
-    print what WORD might stand for from abbreviations.com. (WORD is required for this option)
+  -abr, --abbreviations <abr>
+    Print what <abr> might stand for from abbreviations.com.
 
-  -ant or --antonyms
-    print antonyms for WORD from bighugelabs.com. (WORD is required for this option)
+  -ant, --antonyms <word>
+    Print antonyms for <word> from bighugelabs.com.
 
-  -def or --define
-    print definitions for WORD from wordnik.com if correctly spelled, otherwise print spell suggestions. (WORD is required for this option)
+  -def, --define <word>
+    Print definitions for <word> from wordnik.com if correctly spelled, otherwise print spell suggestions.
 
-  -pro or --pronounce
-    play American English pronunciation of WORD from macmillandictionary.com. (WORD is required for this option)
+  -pro, --pronounce <word>
+    Play pronunciation of <word>.
 
-  -spl or --spell
-    print spell suggestions for WORD from wordlist if not spelled correctly (exits with 1 as exit code), otherwise print a message indicating that WORD is spelled correctly. (WORD is required for this option)
+    Defaults to American English pronunciation (listed as macmillan in sources list) from wordnik.com (which in turn depends on macmillandictionary). Other pronunciation sources/accents (from dictionaryapi.dev) can be listed with -lst|--list-sources and specified with -src|--source (must come after -pro|--pronounce).
 
-  -syn or --synonyms
-    print synonyms for WORD from bighugelabs.com. (WORD is required for this option)
+  -lst, --list-sources <word>
+    List available pronunciation sources/accents for <word>.
 
-  -h or --help
-    print this help message and exit
+  -src, --source <source>
+    Specify the <source> to use for pronunciation. This option must come after -pro|--pronounce.
+
+  -spl, --spell <word>
+    Print spell suggestions for <word> from wordlist if not spelled correctly (exits with 1 as exit code), otherwise print a message indicating that <word> is spelled correctly.
+
+  -syn, --synonyms <word>
+    Print synonyms for <word> from bighugelabs.com.
+
+  -h, --help
+    Print this help message and exit
 EOF
 }
 
@@ -164,6 +220,8 @@ if [[ "$@" ]]; then
       echo "You need to specifiy an option and a word"
       exit 1
     else
+      WORD=$(echo "$WORD" | awk '{print tolower($0)}')
+
       if [ "$OPTION" == "-def" ] || [ "$OPTION" == "--define" ]; then
         define $WORD
       elif [ "$OPTION" == "-spl" ] || [ "$OPTION" == "--spell" ]; then
@@ -175,7 +233,16 @@ if [[ "$@" ]]; then
       elif [ "$OPTION" == "-ant" ] || [ "$OPTION" == "--antonyms" ]; then
         get_antonyms $WORD
       elif [ "$OPTION" == "-pro" ] || [ "$OPTION" == "--pronounce" ]; then
-        pronounce $WORD
+        SOURCE="macmillan"
+
+        OPTION="$(echo "$@" | cut -d ' ' -f 3)"
+        if [[ "$OPTION" == "-src" ]] || [[ "$OPTION" == "--source" ]]; then
+          SOURCE="$(echo "$@" | cut -d ' ' -f 4 | awk '{print tolower($0)}')"
+        fi
+
+        pronounce "$WORD" "$SOURCE"
+      elif [ "$OPTION" == "-lst" ] || [ "$OPTION" == "--list-sources" ]; then
+        list_pronunciation_sources $WORD
       else
         echo "Unkown option \"$OPTION\""
         exit 1

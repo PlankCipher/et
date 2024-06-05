@@ -71,11 +71,24 @@ define () {
 }
 
 pronounce () {
+  WORD="$1"
+
   COMMAND="spell"
-  spell $1 0
+  spell "$WORD" 0
   COMMAND="pronounce"
 
-  et -pro $1
+  SOURCE='macmillan'
+
+  SOURCES=$(et -lst "$WORD" | sed 's/^- //')
+  if [[ $(echo "$SOURCES" | wc -l) -gt 1 ]]; then
+    SOURCE=$(
+      echo "$SOURCES" | \
+      rofi -dmenu -p "$COMMAND" -i -mesg "<b><i>Choose pronunciation source/accent: </i></b>" -l $ITEMS_LIMIT | \
+      sed 's/ (default)$//'
+    )
+  fi
+
+  et -pro "$WORD" -src "$SOURCE"
 }
 
 spell () {
@@ -109,26 +122,26 @@ usage () {
   COMMAND [WORD]
 
 <u>Commands</u>:
-  <b><i>abr</i></b> or <b><i>abbreviations</i></b>
-    get what WORD might stand for from abbreviations.com. (WORD is required for this command)
+  <b><i>abr</i></b>, <b><i>abbreviations &lt;word&gt;</i></b>
+    Get what &lt;word&gt; might stand for from abbreviations.com.
 
-  <b><i>ant</i></b> or <b><i>antonyms</i></b>
-    get antonyms for WORD from bighugelabs.com. (WORD is required for this command)
+  <b><i>ant</i></b>, <b><i>antonyms &lt;word&gt;</i></b>
+    Get antonyms for &lt;word&gt; from bighugelabs.com.
 
-  <b><i>def</i></b> or <b><i>define</i></b>
-    get definitions for WORD from wordnik.com if correctly spelled, otherwise display spell suggestions. (WORD is required for this command)
+  <b><i>def</i></b>, <b><i>define &lt;word&gt;</i></b>
+    Get definitions for &lt;word&gt; from wordnik.com if correctly spelled, otherwise display spell suggestions.
 
-  <b><i>pro</i></b> or <b><i>pronounce</i></b>
-    play American English pronunciation of WORD from macmillandictionary.com. (WORD is required for this command)
+  <b><i>pro</i></b>, <b><i>pronounce &lt;word&gt;</i></b>
+    Play pronunciation of &lt;word&gt; from wordnik.com and dictionaryapi.dev.
 
-  <b><i>spl</i></b> or <b><i>spell</i></b>
-    get spell suggestions for WORD from wordlist if not spelled correctly, otherwise display a message indicating that WORD is spelled correctly. (WORD is required for this command)
+  <b><i>spl</i></b>, <b><i>spell &lt;word&gt;</i></b>
+    Get spell suggestions for &lt;word&gt; from wordlist if not spelled correctly, otherwise display a message indicating that &lt;word&gt; is spelled correctly.
 
-  <b><i>syn</i></b> or <b><i>synonyms</i></b>
-    get synonyms for WORD from bighugelabs.com. (WORD is required for this command)
+  <b><i>syn</i></b>, <b><i>synonyms &lt;word&gt;</i></b>
+    Get synonyms for &lt;word&gt; from bighugelabs.com.
 
   <b><i>help</i></b>
-    display this help message
+    Display this help message
 EOF
 }
 
